@@ -1,85 +1,197 @@
 package org.firstinspires.ftc.teamcode.br;
 
-import com.arcrobotics.ftclib.command.Subsystem;
-import com.arcrobotics.ftclib.hardware.motors.MotorEx;
-import com.arcrobotics.ftclib.hardware.motors.MotorGroup;
+import com.arcrobotics.ftclib.command.Command;
+import com.arcrobotics.ftclib.command.CommandBase;
+import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.bylazar.configurables.annotations.Configurable;
-import com.bylazar.telemetry.JoinedTelemetry;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.function.DoubleSupplier;
 
+//TODO: Testar o subsistema utilizando o robô.
+
+/**
+ *  Implementação de um subsistema para o shooter com flywheels do nosso robô.
+ *  <br><br>
+ *  Baseado em: <a href="https://docs.wpilib.org/pt/stable/docs/software/advanced-controls/introduction/tuning-flywheel.html">...</a>
+ *  @author marcosj
+ */
 @Configurable
-public class Shooter implements Subsystem {
+public class Shooter extends SubsystemBase {
+    private class RelatorioControle {
+        //Calcula e armazena informações importantes de um passo do controlador.
+        double velocidadeAlvo, velocidadeMedida, aceleracaoMedida, erroMedido, tensaoEletricaRespondida = 0;
+
+        double momento = 0;
+        double periodo = 0;
+
+        private void atualizar(double velocidadeAlvo, double velocidadeMedida, double tensaoEletricaRespondida) {
+            double ultimoMomentoRegistrado = momento;
+            momento = System.nanoTime() * 1e-9;;
+
+            if(ultimoMomentoRegistrado != 0) {
+                periodo = (momento - ultimoMomentoRegistrado);
+            }
+
+            this.velocidadeAlvo = velocidadeAlvo;
+
+            double ultimaVelocidadeRegistrada = this.velocidadeMedida;
+            this.velocidadeMedida = velocidadeMedida;
+
+            if(Math.abs(periodo) > 1e-6) {
+                aceleracaoMedida = (velocidadeMedida - ultimaVelocidadeRegistrada) / periodo;
+            }
+
+            erroMedido = velocidadeAlvo - velocidadeMedida;
+
+            this.tensaoEletricaRespondida = tensaoEletricaRespondida;
+        }
+    }
+
+    /**
+     *  Switch ligar/desligar.
+     */
     public boolean ativo = true;
+    /**
+     *  Velocidade alvo em ticks por segundos.
+     */
     public double velocidade = 0;
 
-    private final DcMotorEx motor1;
-    private final DcMotorEx motor2;
+
+    private final DcMotorEx motorPrincipal;
+    private final DcMotorEx motorSecundario;
+
     private final VoltageSensor sensorEnergia;
 
+    private final RelatorioControle relatorio = new RelatorioControle();
+
     public Shooter(HardwareMap hardwareMap) {
-        motor1 = hardwareMap.get(DcMotorEx.class, "");
-        motor2 = hardwareMap.get(DcMotorEx.class, "");
+        motorPrincipal = hardwareMap.get(DcMotorEx.class, "");
+        motorSecundario = hardwareMap.get(DcMotorEx.class, "");
 
         sensorEnergia = hardwareMap.voltageSensor.iterator().next();
     }
 
     @Override
     public void periodic() {
-        //Aqui defino como o modelo físico deve se comportar diante à mudança dos atributos
+        //-- CONTROLADOR --
+        //Aqui é definido como o modelo físico deve reagir diante à mudança dos atributos.
+
+        double velocidadeAtual = motorPrincipal.getVelocity();
+        double velocidadeAlvo = velocidade;
+
+        double tensaoEnviada = 0;
+
         if(ativo) {
-            double velocidadeAtual = motor1.getVelocity();
-
-            double voltagemDesejada =
-                    (velocidade - velocidadeAtual) * Constantes.ganhoProporcional +
-                            velocidade * Constantes.kS + velocidade * Constantes.kV;
-
-            motor1.setPower(voltagemDesejada / sensorEnergia.getVoltage());
-            motor2.setPower(voltagemDesejada / sensorEnergia.getVoltage());
-        } else {
-            motor1.setPower(0);
-            motor2.setPower(0);
+            tensaoEnviada =
+                    (velocidadeAlvo - velocidadeAtual) * Constantes.ganhoProporcional +
+                    velocidadeAlvo * Constantes.kS + velocidadeAlvo * Constantes.kV;
         }
+
+        motorPrincipal.setPower(tensaoEnviada / sensorEnergia.getVoltage());
+        motorSecundario.setPower(motorPrincipal.getPower());
+
+        relatorio.atualizar(velocidadeAlvo, velocidadeAtual, tensaoEnviada);
     }
 
     /**
-     *  Retorna a velocidade real do shooter (ticks/s)
+     *  Retorna a velocidade alvo utilizada pelo controlador a cada passo.
+     * @return (ticks/s)
      */
-    public double obterVelocidadeReal() {
-        return motor1.getVelocity();
+    public double obterVelocidadeAlvo() {
+        return relatorio.velocidadeAlvo;
     }
-
     /**
-     *  Retorna a aceleração do shooter (ticks/s²)
+     *  Retorna a velocidade atual medida pelo controlador a cada passo.
+     * @return (ticks/s)
      */
-    private final double[] ultimoRegistroVelocidade = new double[2];
+    public double obterVelocidadeAtual() {
+        return relatorio.velocidadeMedida;
+    }
+    /**
+     *  Retorna a aceleração medida pelo controlador a cada passo.
+     *  @return (ticks/s²)
+     */
     public double obterAceleracao() {
-        double velocidadeAtual = obterVelocidadeReal();
-        double tempoAtual = System.currentTimeMillis() * 1e-6;
+       return relatorio.aceleracaoMedida;
+    }
+    /**
+     *  Retorna o erro calculado pelo controlador a cada passo.
+     *  @return (ticks/s)
+     */
+    public double obterErro() {
+        return relatorio.erroMedido;
+    }
+    /**
+     *  Retorna a tensão elétrica enviada pelo controlador a cada passo.
+     *  @return (volts)
+     */
+    public double obterTensaoEnviada() {
+        return relatorio.tensaoEletricaRespondida;
+    }
 
-        double aceleracao = 0;
-        if(ultimoRegistroVelocidade.length != 0) {
-            aceleracao = (velocidadeAtual - ultimoRegistroVelocidade[0]) / (tempoAtual - ultimoRegistroVelocidade[1]);
-        }
+    /**
+     * Acelera o shooter utilizando um supridor de velocidade.
+     *
+     * <p>Volta para velocidade inicial após o comando ser encerrado.</p>
+     *
+     * @param velocidadeDesejada A velocidade desejada em (ticks/s)
+     * @return (novo Comando)
+     */
+    public Command acelerar(DoubleSupplier velocidadeDesejada) {
+        return new cAcelerar(velocidadeDesejada, this);
+    }
 
-        ultimoRegistroVelocidade[0] = velocidadeAtual;
-        ultimoRegistroVelocidade[1] = tempoAtual;
-
-        return aceleracao;
+    public void adicionarRelatorio(Telemetry telemetria) {
+        telemetria.addData(getName().toUpperCase() + " : " + "Vel Alvo (Ticks/s)" , this::obterVelocidadeAlvo);
+        telemetria.addData(getName().toUpperCase() + " : " + "Vel Atual (Ticks/s)" , this::obterVelocidadeAtual);
+        telemetria.addData(getName().toUpperCase() + " : " + "Aceleração (Ticks/s²)", this::obterAceleracao);
+        telemetria.addData(getName().toUpperCase() + " : " + "Erro (Ticks/s)", this::obterErro);
+        telemetria.addData(getName().toUpperCase() + " : " + "Resposta (Volts)", this::obterTensaoEnviada);
     }
 }
 
 class Constantes {
+    //Ganhos do PID (apenas o P nesse caso).
     public static double ganhoProporcional = 0;
 
+    //Constantes do FeedForward (kS = volts, kV = volts / ticks/s).
     public static double kS = 0;
     public static double kV = 0;
 }
+
+class cAcelerar extends CommandBase {
+    public final Shooter subShooter;
+    public final DoubleSupplier velocidadeDesejada;
+
+    private double velocidadeInicial;
+
+    public cAcelerar(DoubleSupplier velocidadeDesejada, Shooter subShooter) {
+        this.velocidadeDesejada = velocidadeDesejada;
+
+        this.subShooter = subShooter;
+        addRequirements(this.subShooter);
+    }
+
+    @Override
+    public void initialize() {
+        velocidadeInicial = subShooter.velocidade;
+    }
+
+    @Override
+    public void execute() {
+        subShooter.velocidade = velocidadeDesejada.getAsDouble();
+    }
+
+    @Override
+    public void end(boolean interrupted) {
+        subShooter.velocidade = velocidadeInicial;
+    }
+}
+
 
 
