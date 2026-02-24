@@ -1,20 +1,24 @@
 package org.firstinspires.ftc.teamcode.br;
 
 import com.bylazar.configurables.annotations.Configurable;
+import com.bylazar.configurables.annotations.Sorter;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.seattlesolvers.solverslib.command.Command;
 import com.seattlesolvers.solverslib.command.CommandBase;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
+import com.seattlesolvers.solverslib.controller.PIDController;
+import com.seattlesolvers.solverslib.hardware.motors.Motor;
 import com.seattlesolvers.solverslib.pedroCommand.FollowPathCommand;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 import java.util.function.DoubleSupplier;
 
-//TODO: Testar o subsistema utilizando o robô.
-
+/*TODO: Testar o subsistema utilizando o robô.
+    - Aceleração está sendo calculada muito rapidamente, gerando valores irreais devido a imprecisão do getVelocity.
+*/
 /**
  *  Implementação de um subsistema para o shooter com flywheels do nosso robô.
  *  <br><br>
@@ -32,10 +36,10 @@ public class Shooter extends SubsystemBase {
 
         private void atualizar(double velocidadeAlvo, double velocidadeMedida, double tensaoEletricaRespondida) {
             double ultimoMomentoRegistrado = momento;
-            momento = System.nanoTime() * 1e-9;;
+            momento = System.nanoTime() / 1E6;
 
             if(ultimoMomentoRegistrado != 0) {
-                periodo = (momento - ultimoMomentoRegistrado);
+                periodo = momento - ultimoMomentoRegistrado;
             }
 
             this.velocidadeAlvo = velocidadeAlvo;
@@ -43,8 +47,10 @@ public class Shooter extends SubsystemBase {
             double ultimaVelocidadeRegistrada = this.velocidadeMedida;
             this.velocidadeMedida = velocidadeMedida;
 
-            if(Math.abs(periodo) > 1e-6) {
+            if(Math.abs(periodo) > 1E4) {
                 aceleracaoMedida = (velocidadeMedida - ultimaVelocidadeRegistrada) / periodo;
+            } else {
+                aceleracaoMedida = 0;
             }
 
             erroMedido = velocidadeAlvo - velocidadeMedida;
@@ -71,8 +77,8 @@ public class Shooter extends SubsystemBase {
     private final RelatorioControle relatorio = new RelatorioControle();
 
     public Shooter(HardwareMap hardwareMap) {
-        motorPrincipal = hardwareMap.get(DcMotorEx.class, "");
-        motorSecundario = hardwareMap.get(DcMotorEx.class, "");
+        motorPrincipal = hardwareMap.get(DcMotorEx.class, "shooter");
+        motorSecundario = hardwareMap.get(DcMotorEx.class, "FL");
 
         sensorEnergia = hardwareMap.voltageSensor.iterator().next();
     }
@@ -157,12 +163,14 @@ public class Shooter extends SubsystemBase {
 }
 
 class Constantes {
-    //Ganhos do PID (apenas o P nesse caso).
-    public static double ganhoProporcional = 0;
-
     //Constantes do FeedForward (kS = volts, kV = volts / ticks/s).
+    @Sorter(sort = 0)
     public static double kS = 0;
-    public static double kV = 0;
+    @Sorter(sort = 1)
+    public static double kV = 0.0043;
+
+    //Ganhos do PID (apenas o P nesse caso).
+    public static double ganhoProporcional = 0.1;
 }
 
 class cAcelerar extends CommandBase {
