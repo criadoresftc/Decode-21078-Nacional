@@ -8,9 +8,6 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.seattlesolvers.solverslib.command.Command;
 import com.seattlesolvers.solverslib.command.CommandBase;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
-import com.seattlesolvers.solverslib.controller.PIDController;
-import com.seattlesolvers.solverslib.hardware.motors.Motor;
-import com.seattlesolvers.solverslib.pedroCommand.FollowPathCommand;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
@@ -92,11 +89,10 @@ public class Shooter extends SubsystemBase {
         double velocidadeAlvo = velocidade;
 
         double tensaoEnviada = 0;
-
         if(ativo) {
             tensaoEnviada =
-                    (velocidadeAlvo - velocidadeAtual) * Constantes.ganhoProporcional +
-                    velocidadeAlvo * Constantes.kS + velocidadeAlvo * Constantes.kV;
+                    (velocidadeAlvo - velocidadeAtual) * sConstantes.ganhoProporcional +
+                    velocidadeAlvo * sConstantes.kS + velocidadeAlvo * sConstantes.kV;
         }
 
         motorPrincipal.setPower(tensaoEnviada / sensorEnergia.getVoltage());
@@ -162,7 +158,7 @@ public class Shooter extends SubsystemBase {
     }
 }
 
-class Constantes {
+class sConstantes {
     //Constantes do FeedForward (kS = volts, kV = volts / ticks/s).
     @Sorter(sort = 0)
     public static double kS = 0;
