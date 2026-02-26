@@ -18,7 +18,7 @@ public class TesteTorretaAutomatica extends LinearOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
-            torreta.moverPara(10);
+            torreta.posicao = 10;
             telemetry.addData("a", torreta.obterPosicaoAtual());
             telemetry.addData("b", torreta.encoder.getCurrentPosition());
             telemetry.update();

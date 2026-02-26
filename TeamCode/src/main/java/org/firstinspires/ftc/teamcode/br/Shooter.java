@@ -20,7 +20,6 @@ import java.util.function.DoubleSupplier;
  *  Implementação de um subsistema para o shooter com flywheels do nosso robô.
  *  <br><br>
  *  Baseado em: <a href="https://docs.wpilib.org/pt/stable/docs/software/advanced-controls/introduction/tuning-flywheel.html">...</a>
- *  @author marcosj
  */
 @Configurable
 public class Shooter extends SubsystemBase {
@@ -137,12 +136,13 @@ public class Shooter extends SubsystemBase {
 
 class sConstantes {
     //Constantes do FeedForward (kS = volts, kV = volts / ticks/s).
-    @Sorter(sort = 0)
-    public static double kS = 0;
     @Sorter(sort = 1)
+    public static double kS = 0;
+    @Sorter(sort = 2)
     public static double kV = 0.0043;
 
-    //Ganhos do PID (apenas o P nesse caso).
+    //Ganhos do PID (apenas o P neste caso).
+    @Sorter(sort = 3)
     public static double ganhoProporcional = 0.1;
 }
 
