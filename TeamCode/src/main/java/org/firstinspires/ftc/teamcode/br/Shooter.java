@@ -14,7 +14,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import java.util.function.DoubleSupplier;
 
 /*TODO: Testar o subsistema utilizando o robô.
-    - Aceleração está sendo calculada muito rapidamente, gerando valores irreais devido a imprecisão do getVelocity.
+    
 */
 /**
  *  Implementação de um subsistema para o shooter com flywheels do nosso robô.
@@ -24,35 +24,19 @@ import java.util.function.DoubleSupplier;
  */
 @Configurable
 public class Shooter extends SubsystemBase {
-    private class RelatorioControle {
+    private static class RelatorioControle {
         //Calcula e armazena informações importantes de um passo do controlador.
-        double velocidadeAlvo, velocidadeMedida, aceleracaoMedida, erroMedido, tensaoEletricaRespondida = 0;
+        double velocidadeAlvo, velocidadeMedida, erroMedido, tensaoEletricaRespondida = 0;
 
         double momento = 0;
-        double periodo = 0;
 
-        private void atualizar(double velocidadeAlvo, double velocidadeMedida, double tensaoEletricaRespondida) {
-            double ultimoMomentoRegistrado = momento;
-            momento = System.nanoTime() / 1E6;
-
-            if(ultimoMomentoRegistrado != 0) {
-                periodo = momento - ultimoMomentoRegistrado;
-            }
-
+        private void atualizar(double velocidadeAlvo, double velocidadeMedida, double tensaoEletricaRespondida, double momento) {
             this.velocidadeAlvo = velocidadeAlvo;
-
-            double ultimaVelocidadeRegistrada = this.velocidadeMedida;
             this.velocidadeMedida = velocidadeMedida;
-
-            if(Math.abs(periodo) > 1E4) {
-                aceleracaoMedida = (velocidadeMedida - ultimaVelocidadeRegistrada) / periodo;
-            } else {
-                aceleracaoMedida = 0;
-            }
-
             erroMedido = velocidadeAlvo - velocidadeMedida;
-
             this.tensaoEletricaRespondida = tensaoEletricaRespondida;
+
+            this.momento = momento;
         }
     }
 
@@ -65,13 +49,12 @@ public class Shooter extends SubsystemBase {
      */
     public double velocidade = 0;
 
-
     private final DcMotorEx motorPrincipal;
     private final DcMotorEx motorSecundario;
 
     private final VoltageSensor sensorEnergia;
 
-    private final RelatorioControle relatorio = new RelatorioControle();
+    private final RelatorioControle ultimoRelatorio = new RelatorioControle();
 
     public Shooter(HardwareMap hardwareMap) {
         motorPrincipal = hardwareMap.get(DcMotorEx.class, "shooter");
@@ -84,57 +67,52 @@ public class Shooter extends SubsystemBase {
     public void periodic() {
         //-- CONTROLADOR --
         //Aqui é definido como o modelo físico deve reagir diante à mudança dos atributos.
-
-        double velocidadeAtual = motorPrincipal.getVelocity();
-        double velocidadeAlvo = velocidade;
+        
+        final double velocidadeAtual = motorPrincipal.getVelocity();
+        final double velocidadeAlvo = velocidade;
+        
+        final double momento = System.currentTimeMillis() / 1E6;
 
         double tensaoEnviada = 0;
         if(ativo) {
             tensaoEnviada =
                     (velocidadeAlvo - velocidadeAtual) * sConstantes.ganhoProporcional +
-                    velocidadeAlvo * sConstantes.kS + velocidadeAlvo * sConstantes.kV;
+                    Math.signum(velocidadeAlvo) * sConstantes.kS + velocidadeAlvo * sConstantes.kV;
         }
 
         motorPrincipal.setPower(tensaoEnviada / sensorEnergia.getVoltage());
         motorSecundario.setPower(motorPrincipal.getPower());
 
-        relatorio.atualizar(velocidadeAlvo, velocidadeAtual, tensaoEnviada);
+        ultimoRelatorio.atualizar(velocidadeAlvo, velocidadeAtual, tensaoEnviada, momento);
     }
 
     /**
-     *  Retorna a velocidade alvo utilizada pelo controlador a cada passo.
+     *  Retorna a velocidade alvo utilizada pelo controlador no último passo.
      * @return (ticks/s)
      */
     public double obterVelocidadeAlvo() {
-        return relatorio.velocidadeAlvo;
+        return ultimoRelatorio.velocidadeAlvo;
     }
     /**
-     *  Retorna a velocidade atual medida pelo controlador a cada passo.
+     *  Retorna a velocidade atual medida pelo controlador no último passo
      * @return (ticks/s)
      */
     public double obterVelocidadeAtual() {
-        return relatorio.velocidadeMedida;
+        return ultimoRelatorio.velocidadeMedida;
     }
     /**
-     *  Retorna a aceleração medida pelo controlador a cada passo.
-     *  @return (ticks/s²)
-     */
-    public double obterAceleracao() {
-       return relatorio.aceleracaoMedida;
-    }
-    /**
-     *  Retorna o erro calculado pelo controlador a cada passo.
+     *  Retorna o erro calculado pelo controlador no último passo.
      *  @return (ticks/s)
      */
     public double obterErro() {
-        return relatorio.erroMedido;
+        return ultimoRelatorio.erroMedido;
     }
     /**
-     *  Retorna a tensão elétrica enviada pelo controlador a cada passo.
+     *  Retorna a tensão elétrica enviada pelo controlador no último passo.
      *  @return (volts)
      */
-    public double obterTensaoEnviada() {
-        return relatorio.tensaoEletricaRespondida;
+    public double obterSaida() {
+        return ultimoRelatorio.tensaoEletricaRespondida;
     }
 
     /**
@@ -142,19 +120,18 @@ public class Shooter extends SubsystemBase {
      *
      * <p>Volta para velocidade inicial após o comando ser encerrado.</p>
      *
-     * @param velocidadeDesejada A velocidade desejada em (ticks/s)
+     * @param supridorVelocidadeDesejada Supridor da velocidade desejada em (ticks/s)
      * @return (novo Comando)
      */
-    public Command acelerar(DoubleSupplier velocidadeDesejada) {
-        return new cAcelerar(velocidadeDesejada, this);
+    public Command acelerar(DoubleSupplier supridorVelocidadeDesejada) {
+        return new cAcelerar(supridorVelocidadeDesejada, this);
     }
 
-    public void adicionarRelatorio(Telemetry telemetria) {
+    public void adicionarUltimoRelatorio(Telemetry telemetria) {
         telemetria.addData(getName().toUpperCase() + " : " + "Vel Alvo (Ticks/s)" , this::obterVelocidadeAlvo);
         telemetria.addData(getName().toUpperCase() + " : " + "Vel Atual (Ticks/s)" , this::obterVelocidadeAtual);
-        telemetria.addData(getName().toUpperCase() + " : " + "Aceleração (Ticks/s²)", this::obterAceleracao);
         telemetria.addData(getName().toUpperCase() + " : " + "Erro (Ticks/s)", this::obterErro);
-        telemetria.addData(getName().toUpperCase() + " : " + "Resposta (Volts)", this::obterTensaoEnviada);
+        telemetria.addData(getName().toUpperCase() + " : " + "Saída (Volts)", this::obterSaida);
     }
 }
 
@@ -171,12 +148,12 @@ class sConstantes {
 
 class cAcelerar extends CommandBase {
     public final Shooter subShooter;
-    public final DoubleSupplier velocidadeDesejada;
+    public final DoubleSupplier supridorVelocidadeDesejada;
 
     private double velocidadeInicial;
 
-    public cAcelerar(DoubleSupplier velocidadeDesejada, Shooter subShooter) {
-        this.velocidadeDesejada = velocidadeDesejada;
+    public cAcelerar(DoubleSupplier supridorVelocidadeDesejada, Shooter subShooter) {
+        this.supridorVelocidadeDesejada = supridorVelocidadeDesejada;
 
         this.subShooter = subShooter;
         addRequirements(this.subShooter);
@@ -189,7 +166,7 @@ class cAcelerar extends CommandBase {
 
     @Override
     public void execute() {
-        subShooter.velocidade = velocidadeDesejada.getAsDouble();
+        subShooter.velocidade = supridorVelocidadeDesejada.getAsDouble();
     }
 
     @Override
