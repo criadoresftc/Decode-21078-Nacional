@@ -4,6 +4,7 @@ import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.configurables.annotations.Sorter;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
@@ -20,6 +21,9 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
  */
 @Configurable
 public class Torreta extends SubsystemBase {
+    //Expõem as constantes do sistema globalmente
+    public static tConstantes constantes = new tConstantes();
+
     private static class RelatorioControle {
         //Armazena informações importantes de um passo do controlador.
         double posicaoAlvo, posicaoMedida, erroMedido, tensaoEletricaRespondida = 0;
@@ -55,7 +59,9 @@ public class Torreta extends SubsystemBase {
     private final RelatorioControle ultimoRelatorio = new RelatorioControle();
     public Torreta(double posicaoInicial, HardwareMap hardwareMap) {
         encoder = hardwareMap.get(DcMotorEx.class, "intake");
-        servoMotor = hardwareMap.get(CRServo.class, "torreta");
+        servoMotor = hardwareMap.get(CRServo.class, "torretaServo");
+
+        encoder.setDirection(DcMotorSimple.Direction.REVERSE);
 
         sensorEnergia = hardwareMap.voltageSensor.iterator().next();
 
@@ -146,13 +152,13 @@ public class Torreta extends SubsystemBase {
 class tConstantes {
     //Constante de conversão ticks/rotação (rotação = 360º)
     @Sorter(sort = 1)
-    public static double ticksPorRotacao = 1981.935483870968;
+    public static double ticksPorRotacao = 33860.26666666667;
 
     //Limitação do modelo físico (graus, sentido anti-horário)
     @Sorter(sort = 2)
-    public static double limitacaoMaxima = 50;
+    public static double limitacaoMaxima = 140;
     @Sorter(sort = 3)
-    public static double limitacaoMinima = -90;
+    public static double limitacaoMinima = 10;
 
     //Tolerância do controlador (graus)
     @Sorter(sort = 4)
@@ -160,13 +166,13 @@ class tConstantes {
 
     //Constantes do FeedForward (kS = volts, kV = volts / graus/s).
     @Sorter(sort = 5)
-    public static double kV = 1;
+    public static double kV = 0.03;
     @Sorter(sort = 6)
-    public static double kS = 4;
+    public static double kS = 1;
 
     //Ganhos do PID (apenas o P e D neste caso).
     @Sorter(sort = 7)
-    public static double ganhoProporcional = 4;
+    public static double ganhoProporcional = 0.2;
     @Sorter(sort = 8)
-    public static double ganhoDerivado = 0.1;
+    public static double ganhoDerivado = 0;
 }

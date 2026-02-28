@@ -23,6 +23,9 @@ import java.util.function.DoubleSupplier;
  */
 @Configurable
 public class Shooter extends SubsystemBase {
+    //Expõem as constantes do sistema globalmente
+    public static sConstantes constantes = new sConstantes();
+
     private static class RelatorioControle {
         //Calcula e armazena informações importantes de um passo do controlador.
         double velocidadeAlvo, velocidadeMedida, erroMedido, tensaoEletricaRespondida = 0;
@@ -56,8 +59,8 @@ public class Shooter extends SubsystemBase {
     private final RelatorioControle ultimoRelatorio = new RelatorioControle();
 
     public Shooter(HardwareMap hardwareMap) {
-        motorPrincipal = hardwareMap.get(DcMotorEx.class, "shooter");
-        motorSecundario = hardwareMap.get(DcMotorEx.class, "FL");
+        motorPrincipal = hardwareMap.get(DcMotorEx.class, "shooter1");
+        motorSecundario = hardwareMap.get(DcMotorEx.class, "shooter");
 
         sensorEnergia = hardwareMap.voltageSensor.iterator().next();
     }

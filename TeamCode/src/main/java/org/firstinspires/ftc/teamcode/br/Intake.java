@@ -33,7 +33,7 @@ public class Intake extends SubsystemBase {
 
     @Override
     public void periodic() {
-        final boolean artefatoDetectado;
+        final boolean artefatoDetectado = true;
 
         switch (tarefa) {
             case ENVIAR_ARTEFATO:
