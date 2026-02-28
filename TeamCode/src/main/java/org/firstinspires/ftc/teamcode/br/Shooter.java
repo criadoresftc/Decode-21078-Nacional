@@ -13,9 +13,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 import java.util.function.DoubleSupplier;
 
-/*TODO: Testar o subsistema utilizando o robô.
-    
-*/
+
 /**
  *  Implementação de um subsistema para o shooter com flywheels do nosso robô.
  *  <br><br>
@@ -117,6 +115,15 @@ public class Shooter extends SubsystemBase {
         return ultimoRelatorio.tensaoEletricaRespondida;
     }
 
+    public void adicionarUltimoRelatorio(Telemetry telemetria) {
+        telemetria.addData(getName().toUpperCase() + " : " + "Vel Alvo (Ticks/s)" , this::obterVelocidadeAlvo);
+        telemetria.addData(getName().toUpperCase() + " : " + "Vel Atual (Ticks/s)" , this::obterVelocidadeAtual);
+        telemetria.addData(getName().toUpperCase() + " : " + "Erro (Ticks/s)", this::obterErro);
+        telemetria.addData(getName().toUpperCase() + " : " + "Saída (Volts)", this::obterSaida);
+    }
+
+    //-- COMANDOS --
+
     /**
      * Acelera o shooter utilizando um supridor de velocidade.
      *
@@ -128,12 +135,16 @@ public class Shooter extends SubsystemBase {
     public Command acelerar(DoubleSupplier supridorVelocidadeDesejada) {
         return new cAcelerar(supridorVelocidadeDesejada, this);
     }
-
-    public void adicionarUltimoRelatorio(Telemetry telemetria) {
-        telemetria.addData(getName().toUpperCase() + " : " + "Vel Alvo (Ticks/s)" , this::obterVelocidadeAlvo);
-        telemetria.addData(getName().toUpperCase() + " : " + "Vel Atual (Ticks/s)" , this::obterVelocidadeAtual);
-        telemetria.addData(getName().toUpperCase() + " : " + "Erro (Ticks/s)", this::obterErro);
-        telemetria.addData(getName().toUpperCase() + " : " + "Saída (Volts)", this::obterSaida);
+    /**
+     * Trava o shooter numa determinada velocidade.
+     *
+     * <p>Volta para velocidade inicial após o comando ser encerrado.</p>
+     *
+     * @param velocidadeDesejada A velocidade desejada em (ticks/s)
+     * @return (novo Comando)
+     */
+    public Command travar(double velocidadeDesejada) {
+        return new cTravar(velocidadeDesejada, this);
     }
 }
 
@@ -173,6 +184,31 @@ class cAcelerar extends CommandBase {
     }
 
     @Override
+    public void end(boolean interrupted) {
+        subShooter.velocidade = velocidadeInicial;
+    }
+}
+
+class cTravar extends CommandBase {
+    public final Shooter subShooter;
+    public final double velocidadeDesejada;
+
+    private double velocidadeInicial;
+
+    public cTravar(double velocidadeDesejada, Shooter subShooter) {
+        this.velocidadeDesejada = velocidadeDesejada;
+
+        this.subShooter = subShooter;
+        addRequirements(this.subShooter);
+    }
+
+    @Override
+    public void initialize() {
+        velocidadeInicial = subShooter.velocidade;
+
+        subShooter.velocidade = velocidadeDesejada;
+    }
+
     public void end(boolean interrupted) {
         subShooter.velocidade = velocidadeInicial;
     }
