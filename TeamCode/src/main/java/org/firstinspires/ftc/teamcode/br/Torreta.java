@@ -3,17 +3,18 @@ package org.firstinspires.ftc.teamcode.br;
 import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.configurables.annotations.Sorter;
 import com.qualcomm.robotcore.hardware.CRServo;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
+import com.seattlesolvers.solverslib.command.Command;
+import com.seattlesolvers.solverslib.command.CommandBase;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
+import com.seattlesolvers.solverslib.hardware.motors.Motor;
+import com.seattlesolvers.solverslib.util.MathUtils;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
-/*TODO: Testar o subsistema utilizando o robô.
+import java.util.function.DoubleSupplier;
 
- */
 /**
  *  Implementação de um subsistema para a torreta giratória do nosso robô.
  *  <br><br>
@@ -21,7 +22,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
  */
 @Configurable
 public class Torreta extends SubsystemBase {
-    //Expõem as constantes do sistema globalmente
+    //Expõem as constantes utilizadas globalmente (para Dashboards).
     public static tConstantes constantes = new tConstantes();
 
     private static class RelatorioControle {
@@ -47,21 +48,21 @@ public class Torreta extends SubsystemBase {
      */
     public boolean ativo = true;
     /**
-     *  Posição alvo em graus.
+     *  Posição alvo em (Graus).
      */
     public double posicao;
 
-    public final DcMotorEx encoder;
+    public final Motor.Encoder encoder;
     private final com.qualcomm.robotcore.hardware.CRServo servoMotor;
 
     private final VoltageSensor sensorEnergia;
 
     private final RelatorioControle ultimoRelatorio = new RelatorioControle();
     public Torreta(double posicaoInicial, HardwareMap hardwareMap) {
-        encoder = hardwareMap.get(DcMotorEx.class, "intake");
+        encoder = new Motor(hardwareMap, "intake").encoder;
         servoMotor = hardwareMap.get(CRServo.class, "torretaServo");
 
-        encoder.setDirection(DcMotorSimple.Direction.REVERSE);
+        encoder.setDirection(Motor.Direction.REVERSE);
 
         sensorEnergia = hardwareMap.voltageSensor.iterator().next();
 
@@ -73,19 +74,15 @@ public class Torreta extends SubsystemBase {
         //-- CONTROLADOR --
         //Aqui é definido como o modelo físico deve reagir diante à mudança dos atributos.
 
-        final double posicaoAtual = encoder.getCurrentPosition() / tConstantes.ticksPorRotacao * 360;
-        final double posicaoAlvo = posicao % 360;
+        final double posicaoAtual = encoder.getPosition() / tConstantes.ticksPorRotacao * 360;
+        final double posicaoAlvo = MathUtils.clamp(posicao % 360, tConstantes.limitacaoMinima, tConstantes.limitacaoMaxima);
 
         final double erro = posicaoAtual - posicaoAlvo;
 
         final double momentoAtual = System.nanoTime() / 1E9;
 
         double tensaoEnviada = 0;
-        if(ativo &&
-                Math.abs(erro) > tConstantes.tolerancia &&
-                posicao <= tConstantes.limitacaoMaxima &&
-                posicao >= tConstantes.limitacaoMinima
-        ) {
+        if(ativo && Math.abs(erro) > tConstantes.tolerancia) {
             final double periodo = momentoAtual - ultimoRelatorio.momento;
 
             tensaoEnviada = erro * tConstantes.ganhoProporcional + (erro - ultimoRelatorio.erroMedido) / periodo * tConstantes.ganhoDerivado +
@@ -107,7 +104,6 @@ public class Torreta extends SubsystemBase {
     public double obterPosicaoAlvo() {
         return ultimoRelatorio.posicaoAlvo;
     }
-
     /**
      *  Retorna a posição atual medida pelo controlador no último passo.
      * @return (graus)
@@ -115,7 +111,6 @@ public class Torreta extends SubsystemBase {
     public double obterPosicaoAtual() {
         return ultimoRelatorio.posicaoMedida;
     }
-
     /**
      *  Retorna o erro de posição medido pelo controlador no último passo.
      * @return (graus)
@@ -123,7 +118,6 @@ public class Torreta extends SubsystemBase {
     public double obterErroPosicao() {
         return ultimoRelatorio.erroMedido;
     }
-
     /**
      *  Retorna se o controlador chegou na posição alvo no último passo.
      * @return (booleano)
@@ -131,7 +125,6 @@ public class Torreta extends SubsystemBase {
     public boolean estaNaPosicaoAlvo() {
         return ultimoRelatorio.noAlvo;
     }
-
     /**
      *  Retorna a tensão elétrica enviada pelo controlador no último passo.
      *  @return (volts)
@@ -146,6 +139,29 @@ public class Torreta extends SubsystemBase {
         telemetria.addData(getName().toUpperCase() + " : " + "no Alvo? (Booleano)", this::estaNaPosicaoAlvo);
         telemetria.addData(getName().toUpperCase() + " : " + "Erro (Graus)", this::obterErroPosicao);
         telemetria.addData(getName().toUpperCase() + " : " + "Saída (Volts)", this::obterSaida);
+    }
+
+    //-- COMANDOS --
+
+    /**
+     * Rotaciona a torreta para um angulo desejado.
+     *
+     * <p>Termina quando a torreta chegar na posição alvo.</p>
+     *
+     * @param angulo Ângulo desejado em (Graus)
+     * @return (novo Comando)
+     */
+    public Command rotacionarPara(double angulo) {
+        return new cRotacionarPara(angulo, this);
+    }
+    /**
+     * Rotaciona em direção a um alvo.
+     *
+     * @param supridorDirecaoAlvo Supridor da direção do alvo em (Graus)
+     * @return (novo Comando)
+     */
+    public Command seguirAlvo(DoubleSupplier supridorDirecaoAlvo) {
+        return new cSeguirAlvo(supridorDirecaoAlvo, this);
     }
 }
 
@@ -176,3 +192,54 @@ class tConstantes {
     @Sorter(sort = 8)
     public static double ganhoDerivado = 0;
 }
+
+class cRotacionarPara extends CommandBase {
+    public final Torreta subTorreta;
+    public final double posicaoDesejada;
+
+    private double posicaoInicial;
+
+    public cRotacionarPara(double posicaoDesejada, Torreta subTorreta) {
+        this.posicaoDesejada = posicaoDesejada;
+
+        this.subTorreta = subTorreta;
+        addRequirements(this.subTorreta);
+    }
+
+    @Override
+    public void initialize() {
+        posicaoInicial = subTorreta.posicao;
+
+        subTorreta.posicao = posicaoDesejada;
+    }
+
+    @Override
+    public void end(boolean interrupted) {
+        if(interrupted) {
+            subTorreta.posicao = posicaoInicial;
+        }
+    }
+
+    @Override
+    public boolean isFinished() {
+        return subTorreta.estaNaPosicaoAlvo();
+    }
+}
+
+class cSeguirAlvo extends CommandBase {
+    public final Torreta subTorreta;
+    public final DoubleSupplier supridorPosicaoAlvo;
+
+    public cSeguirAlvo(DoubleSupplier supridorPosicaoAlvo, Torreta subTorreta) {
+        this.supridorPosicaoAlvo = supridorPosicaoAlvo;
+
+        this.subTorreta = subTorreta;
+        addRequirements(this.subTorreta);
+    }
+
+    @Override
+    public void execute() {
+        subTorreta.posicao = supridorPosicaoAlvo.getAsDouble();
+    }
+}
+
