@@ -52,6 +52,8 @@ public class Torreta extends SubsystemBase {
      */
     public double posicao;
 
+    public final double posicaoInicial;
+
     public final Motor.Encoder encoder;
     private final com.qualcomm.robotcore.hardware.CRServo servoMotor;
 
@@ -66,7 +68,7 @@ public class Torreta extends SubsystemBase {
 
         sensorEnergia = hardwareMap.voltageSensor.iterator().next();
 
-        posicao = posicaoInicial;
+        this.posicaoInicial = posicaoInicial;
     }
 
     @Override
@@ -74,7 +76,7 @@ public class Torreta extends SubsystemBase {
         //-- CONTROLADOR --
         //Aqui é definido como o modelo físico deve reagir diante à mudança dos atributos.
 
-        final double posicaoAtual = encoder.getPosition() / tConstantes.ticksPorRotacao * 360;
+        final double posicaoAtual = posicaoInicial + encoder.getPosition() / tConstantes.ticksPorRotacao * 360;
         final double posicaoAlvo = MathUtils.clamp(posicao % 360, tConstantes.limitacaoMinima, tConstantes.limitacaoMaxima);
 
         final double erro = posicaoAtual - posicaoAlvo;
