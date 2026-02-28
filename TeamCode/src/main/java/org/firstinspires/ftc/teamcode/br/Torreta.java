@@ -22,7 +22,7 @@ import java.util.function.DoubleSupplier;
  */
 @Configurable
 public class Torreta extends SubsystemBase {
-    //Expõem as constantes utilizadas globalmente (para Dashboards).
+    //Expõem as constantes utilizadas globalmente (para Dashboard).
     public static tConstantes constantes = new tConstantes();
 
     private static class RelatorioControle {
@@ -135,14 +135,6 @@ public class Torreta extends SubsystemBase {
         return ultimoRelatorio.tensaoEletricaRespondida;
     }
 
-    public void adicionarUltimoRelatorio(Telemetry telemetria) {
-        telemetria.addData(getName().toUpperCase() + " : " + "Pos Alvo (Graus)" , this::obterPosicaoAlvo);
-        telemetria.addData(getName().toUpperCase() + " : " + "Pos Atual (Graus)" , this::obterPosicaoAtual);
-        telemetria.addData(getName().toUpperCase() + " : " + "no Alvo? (Booleano)", this::estaNaPosicaoAlvo);
-        telemetria.addData(getName().toUpperCase() + " : " + "Erro (Graus)", this::obterErroPosicao);
-        telemetria.addData(getName().toUpperCase() + " : " + "Saída (Volts)", this::obterSaida);
-    }
-
     //-- COMANDOS --
 
     /**
@@ -164,6 +156,14 @@ public class Torreta extends SubsystemBase {
      */
     public Command seguirAlvo(DoubleSupplier supridorDirecaoAlvo) {
         return new cSeguirAlvo(supridorDirecaoAlvo, this);
+    }
+
+    public void adicionarDepuracao(Telemetry telemetria) {
+        telemetria.addData(getName().toUpperCase() + " : " + "Pos Alvo (Graus)" , this::obterPosicaoAlvo);
+        telemetria.addData(getName().toUpperCase() + " : " + "Pos Atual (Graus)" , this::obterPosicaoAtual);
+        telemetria.addData(getName().toUpperCase() + " : " + "no Alvo? (Booleano)", this::estaNaPosicaoAlvo);
+        telemetria.addData(getName().toUpperCase() + " : " + "Erro (Graus)", this::obterErroPosicao);
+        telemetria.addData(getName().toUpperCase() + " : " + "Saída (Volts)", this::obterSaida);
     }
 }
 

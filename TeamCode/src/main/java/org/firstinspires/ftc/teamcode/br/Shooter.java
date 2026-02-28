@@ -21,7 +21,7 @@ import java.util.function.DoubleSupplier;
  */
 @Configurable
 public class Shooter extends SubsystemBase {
-    //Expõem as constantes do sistema globalmente
+    //Expõem as constantes do sistema globalmente (para Dashboard).
     public static sConstantes constantes = new sConstantes();
 
     private static class RelatorioControle {
@@ -115,13 +115,6 @@ public class Shooter extends SubsystemBase {
         return ultimoRelatorio.tensaoEletricaRespondida;
     }
 
-    public void adicionarUltimoRelatorio(Telemetry telemetria) {
-        telemetria.addData(getName().toUpperCase() + " : " + "Vel Alvo (Ticks/s)" , this::obterVelocidadeAlvo);
-        telemetria.addData(getName().toUpperCase() + " : " + "Vel Atual (Ticks/s)" , this::obterVelocidadeAtual);
-        telemetria.addData(getName().toUpperCase() + " : " + "Erro (Ticks/s)", this::obterErro);
-        telemetria.addData(getName().toUpperCase() + " : " + "Saída (Volts)", this::obterSaida);
-    }
-
     //-- COMANDOS --
 
     /**
@@ -145,6 +138,13 @@ public class Shooter extends SubsystemBase {
      */
     public Command travar(double velocidadeDesejada) {
         return new cTravar(velocidadeDesejada, this);
+    }
+
+    public void adicionarDepuracao(Telemetry telemetria) {
+        telemetria.addData(getName().toUpperCase() + " : " + "Vel Alvo (Ticks/s)" , this::obterVelocidadeAlvo);
+        telemetria.addData(getName().toUpperCase() + " : " + "Vel Atual (Ticks/s)" , this::obterVelocidadeAtual);
+        telemetria.addData(getName().toUpperCase() + " : " + "Erro (Ticks/s)", this::obterErro);
+        telemetria.addData(getName().toUpperCase() + " : " + "Saída (Volts)", this::obterSaida);
     }
 }
 

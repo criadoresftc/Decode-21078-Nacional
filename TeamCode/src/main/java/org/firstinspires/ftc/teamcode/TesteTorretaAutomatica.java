@@ -32,7 +32,7 @@ public class TesteTorretaAutomatica extends LinearOpMode {
 
         while (opModeIsActive()) {
             torreta.posicao = Math.toDegrees(Math.atan2(120 - follower.getPose().getX(), 128 - follower.getPose().getY()) + follower.getPose().getHeading());
-            torreta.adicionarUltimoRelatorio(telemetria);
+            torreta.adicionarDepuracao(telemetria);
             telemetria.update();
 
             follower.update();

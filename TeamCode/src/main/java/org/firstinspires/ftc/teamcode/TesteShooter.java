@@ -43,7 +43,7 @@ public class TesteShooter extends LinearOpMode {
             shooter.velocidade = 500;
             scheduler.run();
 
-            shooter.adicionarUltimoRelatorio(telemetria);
+            shooter.adicionarDepuracao(telemetria);
             telemetria.update();
         }
 
