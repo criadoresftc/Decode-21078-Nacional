@@ -78,8 +78,8 @@ public class Torreta extends SubsystemBase {
         //-- CONTROLADOR --
         //Aqui é definido como o modelo físico deve reagir diante à mudança dos atributos.
 
-        final double posicaoAtual = posicaoInicial + encoder.getPosition() / tConstantes.ticksPorRotacao * 360;
-        final double posicaoAlvo = MathUtils.clamp(posicao % 360, tConstantes.limitacaoMinima, tConstantes.limitacaoMaxima);
+        final double posicaoAtual = MathUtils.normalizeDegrees(posicaoInicial + encoder.getPosition() / tConstantes.ticksPorRotacao * 360, true);
+        final double posicaoAlvo = MathUtils.clamp(MathUtils.normalizeDegrees(posicao, true), tConstantes.limitacaoMinima, tConstantes.limitacaoMaxima);
 
         final double erro = posicaoAlvo - posicaoAtual;
 
