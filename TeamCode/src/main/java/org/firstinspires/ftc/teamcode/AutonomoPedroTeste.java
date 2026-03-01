@@ -25,33 +25,33 @@ public class AutonomoPedroTeste extends LinearOpMode {
 
         follower.setStartingPose(new Pose(120, 128, Math.toRadians(35)));
 
-        PathChain Path1, Path2, Path3, Path4, Path5, Path6, Path7, Path8, Path9, Path10, Path11;
+        PathChain Path1, Path2, Path3, Path4, Path5, Path6, Path7, Path8, Path9, Path10, Path11, Path12;
 
         Path1 = follower.pathBuilder()
                 .addPath(
                         new BezierLine(
-                                new Pose(117.557, 131.551),
-                                new Pose(95.000, 84.000)
+                                new Pose(120.000, 128.000),
+                                new Pose(82.000, 86.000)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(37), Math.toRadians(0))
+                .setLinearHeadingInterpolation(Math.toRadians(36), Math.toRadians(0))
                 .build();
 
         Path2 = follower.pathBuilder()
                 .addPath(
                         new BezierLine(
-                                new Pose(95.000, 84.000),
-                                new Pose(102.000, 60.000)
+                                new Pose(82.000, 86.000),
+                                new Pose(105.000, 60.000)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
+                .setLinearHeadingInterpolation(Math.toRadians(-45), Math.toRadians(0))
                 .build();
 
         Path3 = follower.pathBuilder()
                 .addPath(
                         new BezierLine(
-                                new Pose(102.000, 60.000),
-                                new Pose(125.000, 60.000)
+                                new Pose(105.000, 60.000),
+                                new Pose(130.000, 60.000)
                         )
                 )
                 .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
@@ -60,18 +60,18 @@ public class AutonomoPedroTeste extends LinearOpMode {
         Path4 = follower.pathBuilder()
                 .addPath(
                         new BezierLine(
-                                new Pose(125.000, 60.000),
-                                new Pose(85.000, 75.000)
+                                new Pose(130.000, 60.000),
+                                new Pose(83.000, 81.000)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
+                .setLinearHeadingInterpolation(Math.toRadians(45), Math.toRadians(0))
                 .build();
 
         Path5 = follower.pathBuilder()
                 .addPath(
                         new BezierLine(
-                                new Pose(85.000, 75.000),
-                                new Pose(131.000, 58.000)
+                                new Pose(83.000, 81.000),
+                                new Pose(130.000, 60.000)
                         )
                 )
                 .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(45))
@@ -80,8 +80,8 @@ public class AutonomoPedroTeste extends LinearOpMode {
         Path6 = follower.pathBuilder()
                 .addPath(
                         new BezierLine(
-                                new Pose(131.000, 58.000),
-                                new Pose(131.000, 51.000)
+                                new Pose(130.000, 60.000),
+                                new Pose(127.000, 55.000)
                         )
                 )
                 .setLinearHeadingInterpolation(Math.toRadians(45), Math.toRadians(45))
@@ -90,8 +90,8 @@ public class AutonomoPedroTeste extends LinearOpMode {
         Path7 = follower.pathBuilder()
                 .addPath(
                         new BezierLine(
-                                new Pose(131.000, 51.000),
-                                new Pose(91.000, 82.000)
+                                new Pose(127.000, 55.000),
+                                new Pose(84.000, 81.000)
                         )
                 )
                 .setLinearHeadingInterpolation(Math.toRadians(45), Math.toRadians(0))
@@ -100,8 +100,8 @@ public class AutonomoPedroTeste extends LinearOpMode {
         Path8 = follower.pathBuilder()
                 .addPath(
                         new BezierLine(
-                                new Pose(91.000, 82.000),
-                                new Pose(130.000, 58.000)
+                                new Pose(84.000, 81.000),
+                                new Pose(130.000, 60.000)
                         )
                 )
                 .setLinearHeadingInterpolation(Math.toRadians(45), Math.toRadians(45))
@@ -110,32 +110,43 @@ public class AutonomoPedroTeste extends LinearOpMode {
         Path9 = follower.pathBuilder()
                 .addPath(
                         new BezierLine(
-                                new Pose(130.000, 58.000),
-                                new Pose(90.000, 80.000)
+                                new Pose(130.000, 60.000),
+                                new Pose(127.000, 55.000)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(45))
+                .setLinearHeadingInterpolation(Math.toRadians(45), Math.toRadians(45))
                 .build();
 
         Path10 = follower.pathBuilder()
                 .addPath(
                         new BezierLine(
-                                new Pose(90.000, 80.000),
-                                new Pose(125.000, 85.000)
+                                new Pose(127.000, 55.000),
+                                new Pose(84.000, 83.000)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
+                .setLinearHeadingInterpolation(Math.toRadians(45), Math.toRadians(0))
                 .build();
 
         Path11 = follower.pathBuilder()
                 .addPath(
                         new BezierLine(
-                                new Pose(125.000, 85.000),
-                                new Pose(100.000, 96.000)
+                                new Pose(84.000, 83.000),
+                                new Pose(125.000, 83.000)
                         )
                 )
                 .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
                 .build();
+
+        Path12 = follower.pathBuilder()
+                .addPath(
+                        new BezierLine(
+                                new Pose(125.000, 83.000),
+                                new Pose(85.000, 83.000)
+                        )
+                )
+                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
+                .build();
+
 
 
 
@@ -153,7 +164,8 @@ public class AutonomoPedroTeste extends LinearOpMode {
                 new FollowPathCommand(follower, Path8),
                 new FollowPathCommand(follower, Path9),
                 new FollowPathCommand(follower, Path10),
-                new FollowPathCommand(follower, Path11)
+                new FollowPathCommand(follower, Path11),
+                new FollowPathCommand(follower, Path12)
         );
 
         waitForStart();

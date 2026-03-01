@@ -4,6 +4,7 @@ import com.bylazar.configurables.annotations.Configurable;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
@@ -42,12 +43,14 @@ public class Intake extends SubsystemBase {
     private final Timing.Stopwatch cronometroTempoSemArtefatoDetectado = new Timing.Stopwatch();
 
     public Intake(Modo modoInicial, HardwareMap hardwareMap) {
-        motorEntrada = hardwareMap.get(DcMotorEx.class, "");
-        motorSaida = hardwareMap.get(DcMotorEx.class, "");
-        servoApoioPrimario = hardwareMap.get(CRServo.class, "");
-        servoApoioSecundario = hardwareMap.get(CRServo.class, "");
+        motorEntrada = hardwareMap.get(DcMotorEx.class, "intake");
+        motorSaida = hardwareMap.get(DcMotorEx.class, "out");
+        servoApoioPrimario = hardwareMap.get(CRServo.class, "levantador");
+        servoApoioSecundario = hardwareMap.get(CRServo.class, "subidor");
 
-        sensorArtefato = (DistanceSensor) hardwareMap.get(ColorSensor.class, "");
+        motorSaida.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        sensorArtefato = (DistanceSensor) hardwareMap.get(ColorSensor.class, "SCor");
 
         modo = modoInicial;
     }
@@ -56,45 +59,48 @@ public class Intake extends SubsystemBase {
     public void periodic() {
         //-- CONTROLADOR --
         //Aqui é definido como o modelo físico deve reagir diante à mudança dos atributos.
-        switch (modo) {
-            case ENVIAR_ARTEFATO:
-                motorEntrada.setPower(0.5);
-                motorSaida.setPower(0.9);
+        if(ativo) {
+            switch (modo) {
+                case ENVIAR_ARTEFATO:
+                    motorEntrada.setPower(0.8);
+                    motorSaida.setPower(0.9);
 
-                servoApoioPrimario.setPower(0.8);
-                servoApoioSecundario.setPower(0.8);
-            break;
-            case COLETAR_ARTEFATO:
-                motorEntrada.setPower(0.9);
-                if(detectarArtefato()) {
+                    servoApoioPrimario.setPower(0.8);
+                    servoApoioSecundario.setPower(0.8);
+                    break;
+                case COLETAR_ARTEFATO:
+                    motorEntrada.setPower(0.9);
+                    if (detectarArtefato()) {
+                        motorSaida.setPower(0);
+                    } else {
+                        motorSaida.setPower(0.5);
+                    }
+
+                    servoApoioPrimario.setPower(0.5);
+                    servoApoioSecundario.setPower(-0.5);
+                    break;
+                case EJETAR_ARTEFATO:
+                    motorEntrada.setPower(-0.9);
+                    motorSaida.setPower(-0.9);
+
+                    servoApoioPrimario.setPower(0);
+                    servoApoioSecundario.setPower(0);
+                    break;
+                case SEGURAR_ARTEFATO:
+                    motorEntrada.setPower(0.3);
                     motorSaida.setPower(0);
-                } else {
-                    motorSaida.setPower(0.5);
-                }
 
-                servoApoioPrimario.setPower(0.5);
-                servoApoioSecundario.setPower(0);
-            break;
-            case EJETAR_ARTEFATO:
-                motorEntrada.setPower(-0.9);
-                motorSaida.setPower(-0.9);
+                    servoApoioPrimario.setPower(0);
+                    servoApoioSecundario.setPower(0);
+                    break;
+                case NAO_FAZER_NADA:
+                    motorEntrada.setPower(0);
+                    motorSaida.setPower(0);
 
-                servoApoioPrimario.setPower(0);
-                servoApoioSecundario.setPower(0);
-            break;
-            case SEGURAR_ARTEFATO:
-                motorEntrada.setPower(0.3);
-                motorSaida.setPower(0);
-
-                servoApoioPrimario.setPower(0);
-                servoApoioSecundario.setPower(0);
-            break;
-            case NAO_FAZER_NADA:
-                motorEntrada.setPower(0);
-                motorSaida.setPower(0);
-
-                servoApoioPrimario.setPower(0);
-                servoApoioSecundario.setPower(0);
+                    servoApoioPrimario.setPower(0);
+                    servoApoioSecundario.setPower(0);
+                    break;
+            }
         }
     }
 

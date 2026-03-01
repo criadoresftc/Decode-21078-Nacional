@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.br;
 import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.configurables.annotations.Sorter;
 import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.seattlesolvers.solverslib.command.Command;
@@ -65,6 +66,7 @@ public class Torreta extends SubsystemBase {
         servoMotor = hardwareMap.get(CRServo.class, "torretaServo");
 
         encoder.setDirection(Motor.Direction.REVERSE);
+        servoMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
         sensorEnergia = hardwareMap.voltageSensor.iterator().next();
 
@@ -79,7 +81,7 @@ public class Torreta extends SubsystemBase {
         final double posicaoAtual = posicaoInicial + encoder.getPosition() / tConstantes.ticksPorRotacao * 360;
         final double posicaoAlvo = MathUtils.clamp(posicao % 360, tConstantes.limitacaoMinima, tConstantes.limitacaoMaxima);
 
-        final double erro = posicaoAtual - posicaoAlvo;
+        final double erro = posicaoAlvo - posicaoAtual;
 
         final double momentoAtual = System.nanoTime() / 1E9;
 
