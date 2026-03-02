@@ -39,6 +39,7 @@ public class Shooter extends SubsystemBase {
     private static class RelatorioControle {
         //Calcula e armazena informações importantes de um passo do controlador.
         double velocidadeAlvo, velocidadeMedida, erroMedido, tensaoEletricaRespondida = 0;
+        boolean noAlvo;
 
         double momento = 0;
 
@@ -46,6 +47,7 @@ public class Shooter extends SubsystemBase {
             this.velocidadeAlvo = velocidadeAlvo;
             this.velocidadeMedida = velocidadeMedida;
             erroMedido = velocidadeAlvo - velocidadeMedida;
+            this.noAlvo = Math.abs(velocidadeAlvo - velocidadeMedida) <= 20;
             this.tensaoEletricaRespondida = tensaoEletricaRespondida;
 
             this.momento = momento;
@@ -118,8 +120,15 @@ public class Shooter extends SubsystemBase {
      *  Retorna o erro calculado pelo controlador no último passo.
      *  @return (ticks/s)
      */
-    public double obterErro() {
+    public double obterErroVelocidade() {
         return ultimoRelatorio.erroMedido;
+    }
+    /**
+     *  Retorna se o controlador chegou na velocidade alvo no último passo.
+     * @return (booleano)
+     */
+    public boolean estaNaVelocidadeAlvo() {
+        return ultimoRelatorio.noAlvo;
     }
     /**
      *  Retorna a tensão elétrica enviada pelo controlador no último passo.
@@ -157,7 +166,7 @@ public class Shooter extends SubsystemBase {
     public void adicionarDepuracao(Telemetry telemetria) {
         telemetria.addData(getName().toUpperCase() + " : " + "Vel Alvo (Ticks/s)" , this::obterVelocidadeAlvo);
         telemetria.addData(getName().toUpperCase() + " : " + "Vel Atual (Ticks/s)" , this::obterVelocidadeAtual);
-        telemetria.addData(getName().toUpperCase() + " : " + "Erro (Ticks/s)", this::obterErro);
+        telemetria.addData(getName().toUpperCase() + " : " + "Erro (Ticks/s)", this::obterErroVelocidade);
         telemetria.addData(getName().toUpperCase() + " : " + "Saída (Volts)", this::obterSaida);
     }
 }
