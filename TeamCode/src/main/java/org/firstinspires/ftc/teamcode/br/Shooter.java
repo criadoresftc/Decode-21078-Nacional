@@ -15,14 +15,26 @@ import java.util.function.DoubleSupplier;
 
 
 /**
- *  Implementação de um subsistema para o shooter com flywheels do nosso robô.
+ *  Implementação de um subsistema para o Shooter com Flywheels do nosso robô.
  *  <br><br>
  *  Baseado em: <a href="https://docs.wpilib.org/pt/stable/docs/software/advanced-controls/introduction/tuning-flywheel.html">...</a>
  */
 @Configurable
 public class Shooter extends SubsystemBase {
-    //Expõem as constantes do sistema globalmente (para Dashboard).
-    public static sConstantes constantes = new sConstantes();
+    //-- PARÂMETROS --
+
+    public static class Params {
+        //Constantes do FeedForward (kS = volts, kV = volts / ticks/s).
+        @Sorter(sort = 1)
+        public double kS = 0;
+        @Sorter(sort = 2)
+        public double kV = 0.0043;
+
+        //Ganhos do PID (apenas o P neste caso).
+        @Sorter(sort = 3)
+        public double ganhoProporcional = 0.1;
+    }
+    public static Params parametros = new Params();
 
     private static class RelatorioControle {
         //Calcula e armazena informações importantes de um passo do controlador.
@@ -39,6 +51,8 @@ public class Shooter extends SubsystemBase {
             this.momento = momento;
         }
     }
+
+    //-- ATRIBUTOS --
 
     /**
      *  Switch ligar/desligar.
@@ -76,8 +90,8 @@ public class Shooter extends SubsystemBase {
         double tensaoEnviada = 0;
         if(ativo) {
             tensaoEnviada =
-                    (velocidadeAlvo - velocidadeAtual) * sConstantes.ganhoProporcional +
-                    Math.signum(velocidadeAlvo) * sConstantes.kS + velocidadeAlvo * sConstantes.kV;
+                    (velocidadeAlvo - velocidadeAtual) * parametros.ganhoProporcional +
+                    Math.signum(velocidadeAlvo) * parametros.kS + velocidadeAlvo * parametros.kV;
         }
 
         motorPrincipal.setPower(tensaoEnviada / sensorEnergia.getVoltage());
@@ -126,18 +140,18 @@ public class Shooter extends SubsystemBase {
      * @return (novo Comando)
      */
     public Command acelerar(DoubleSupplier supridorVelocidadeDesejada) {
-        return new cAcelerar(supridorVelocidadeDesejada, this);
+        return new ComAcelerar(supridorVelocidadeDesejada, this);
     }
     /**
-     * Trava o shooter numa determinada velocidade.
+     * Segura o shooter numa determinada velocidade.
      *
      * <p>Volta para velocidade inicial após o comando ser encerrado.</p>
      *
      * @param velocidadeDesejada A velocidade desejada em (ticks/s)
      * @return (novo Comando)
      */
-    public Command travar(double velocidadeDesejada) {
-        return new cTravar(velocidadeDesejada, this);
+    public Command segurarVelocidade(double velocidadeDesejada) {
+        return new ComSegurarVelocidade(velocidadeDesejada, this);
     }
 
     public void adicionarDepuracao(Telemetry telemetria) {
@@ -148,25 +162,13 @@ public class Shooter extends SubsystemBase {
     }
 }
 
-class sConstantes {
-    //Constantes do FeedForward (kS = volts, kV = volts / ticks/s).
-    @Sorter(sort = 1)
-    public static double kS = 0;
-    @Sorter(sort = 2)
-    public static double kV = 0.0043;
-
-    //Ganhos do PID (apenas o P neste caso).
-    @Sorter(sort = 3)
-    public static double ganhoProporcional = 0.1;
-}
-
-class cAcelerar extends CommandBase {
+class ComAcelerar extends CommandBase {
     public final Shooter subShooter;
     public final DoubleSupplier supridorVelocidadeDesejada;
 
     private double velocidadeInicial;
 
-    public cAcelerar(DoubleSupplier supridorVelocidadeDesejada, Shooter subShooter) {
+    public ComAcelerar(DoubleSupplier supridorVelocidadeDesejada, Shooter subShooter) {
         this.supridorVelocidadeDesejada = supridorVelocidadeDesejada;
 
         this.subShooter = subShooter;
@@ -189,13 +191,13 @@ class cAcelerar extends CommandBase {
     }
 }
 
-class cTravar extends CommandBase {
+class ComSegurarVelocidade extends CommandBase {
     public final Shooter subShooter;
     public final double velocidadeDesejada;
 
     private double velocidadeInicial;
 
-    public cTravar(double velocidadeDesejada, Shooter subShooter) {
+    public ComSegurarVelocidade(double velocidadeDesejada, Shooter subShooter) {
         this.velocidadeDesejada = velocidadeDesejada;
 
         this.subShooter = subShooter;
