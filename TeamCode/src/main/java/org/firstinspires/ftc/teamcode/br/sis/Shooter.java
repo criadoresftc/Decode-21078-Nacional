@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.br;
+package org.firstinspires.ftc.teamcode.br.sis;
 
 import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.configurables.annotations.Sorter;

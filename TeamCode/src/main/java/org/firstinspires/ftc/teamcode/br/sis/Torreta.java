@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.br;
+package org.firstinspires.ftc.teamcode.br.sis;
 
 import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.configurables.annotations.Sorter;
@@ -79,7 +79,7 @@ public class Torreta extends SubsystemBase {
      */
     public boolean ativo = true;
     /**
-     *  Posição alvo em (Graus).
+     *  Posição alvo em graus.
      */
     public double posicao;
 
