@@ -98,6 +98,8 @@ public class Torreta extends SubsystemBase {
         encoder.setDirection(Motor.Direction.REVERSE);
         servoMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
+        encoder.reset();
+
         sensorEnergia = hardwareMap.voltageSensor.iterator().next();
 
         this.posicaoInicial = posicaoInicial;
