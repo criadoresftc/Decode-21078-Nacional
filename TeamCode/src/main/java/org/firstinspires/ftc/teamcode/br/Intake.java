@@ -7,22 +7,60 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.seattlesolvers.solverslib.command.Command;
+import com.seattlesolvers.solverslib.command.CommandBase;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
 import com.seattlesolvers.solverslib.util.Timing;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
-
-//TODO: Testar no robô + Adicionar JDocs
+/**
+ *  Implementação de um subsistema para o Intake do nosso robô.
+ */
 @Configurable
 public class Intake extends SubsystemBase {
-    //Expõem as constantes utilizadas globalmente (para Dashboard).
-    public static iConstantes constantes = new iConstantes();
+    //-- PARÂMETROS --
+
+    public static class Params {
+        //Força enviada para os motores dependendo do seu papel em determinado modo (0.0 min - 1.0 máx).
+        public double forcaAltaAtividade = 0.9;
+        public double forcaMeiaAtividade = 0.5;
+        public double forcaBaixaAtividade = 0.2;
+
+
+        //Até onde um artefato pode ser detectado pelo sensor de distância (centímetros).
+        public double cutoffDistanciaDetectada = 5;
+
+        //Quanto tempo um artefato deve permanecer como detectado (milissegundos).
+        public long duracaoBufferDeteccao = 1000;
+    }
+    public static Params parametros = new Params();
     
     public enum Modo {
-        ENVIAR_ARTEFATO, COLETAR_ARTEFATO, EJETAR_ARTEFATO, SEGURAR_ARTEFATO, NAO_FAZER_NADA
+        /**
+         *  Envia o artefato em direção à saída.
+         */
+        ENVIAR_ARTEFATO,
+        /**
+         *  Coleta o artefato frente a entrada.
+         */
+        COLETAR_ARTEFATO,
+        /**
+         *  Ejeta o artefato armazenado em direção à entrada.
+         */
+        EJETAR_ARTEFATO,
+        /**
+         *  Segura o artefato armazenando, impedindo ele de sair.
+         */
+        SEGURAR_ARTEFATO,
+        /**
+         *  Não faz nada (literalmente).
+         */
+        NAO_FAZER_NADA
     }
+
+    //-- ATRIBUTOS --
 
     /**
      *  Switch ligar/desligar.
@@ -40,7 +78,7 @@ public class Intake extends SubsystemBase {
 
     private final DistanceSensor sensorArtefato;
 
-    private final Timing.Stopwatch cronometroTempoSemArtefatoDetectado = new Timing.Stopwatch();
+    private final Timing.Stopwatch cronometroTempoSemArtefato = new Timing.Stopwatch();
 
     public Intake(Modo modoInicial, HardwareMap hardwareMap) {
         motorEntrada = hardwareMap.get(DcMotorEx.class, "intake");
@@ -59,39 +97,40 @@ public class Intake extends SubsystemBase {
     public void periodic() {
         //-- CONTROLADOR --
         //Aqui é definido como o modelo físico deve reagir diante à mudança dos atributos.
+
         if(ativo) {
             switch (modo) {
                 case ENVIAR_ARTEFATO:
-                    motorEntrada.setPower(0.8);
-                    motorSaida.setPower(0.9);
+                    motorEntrada.setPower(parametros.forcaAltaAtividade);
+                    motorSaida.setPower(parametros.forcaAltaAtividade);
 
-                    servoApoioPrimario.setPower(0.8);
-                    servoApoioSecundario.setPower(0.8);
+                    servoApoioPrimario.setPower(parametros.forcaMeiaAtividade);
+                    servoApoioSecundario.setPower(parametros.forcaAltaAtividade);
                     break;
                 case COLETAR_ARTEFATO:
-                    motorEntrada.setPower(0.9);
+                    motorEntrada.setPower(parametros.forcaAltaAtividade);
                     if (detectarArtefato()) {
                         motorSaida.setPower(0);
                     } else {
-                        motorSaida.setPower(0.5);
+                        motorSaida.setPower(parametros.forcaMeiaAtividade);
                     }
 
-                    servoApoioPrimario.setPower(0.5);
-                    servoApoioSecundario.setPower(-0.5);
+                    servoApoioPrimario.setPower(parametros.forcaMeiaAtividade);
+                    servoApoioSecundario.setPower(-parametros.forcaMeiaAtividade);
                     break;
                 case EJETAR_ARTEFATO:
-                    motorEntrada.setPower(-0.9);
-                    motorSaida.setPower(-0.9);
+                    motorEntrada.setPower(-parametros.forcaAltaAtividade);
+                    motorSaida.setPower(-parametros.forcaAltaAtividade);
 
-                    servoApoioPrimario.setPower(0);
-                    servoApoioSecundario.setPower(0);
+                    servoApoioPrimario.setPower(-parametros.forcaAltaAtividade);
+                    servoApoioSecundario.setPower(-parametros.forcaAltaAtividade);
                     break;
                 case SEGURAR_ARTEFATO:
-                    motorEntrada.setPower(0.3);
+                    motorEntrada.setPower(parametros.forcaBaixaAtividade);
                     motorSaida.setPower(0);
 
-                    servoApoioPrimario.setPower(0);
-                    servoApoioSecundario.setPower(0);
+                    servoApoioPrimario.setPower(parametros.forcaMeiaAtividade);
+                    servoApoioSecundario.setPower(-parametros.forcaMeiaAtividade);
                     break;
                 case NAO_FAZER_NADA:
                     motorEntrada.setPower(0);
@@ -104,23 +143,45 @@ public class Intake extends SubsystemBase {
         }
     }
 
+    /**
+     *  Verifica se há um artefato armazenado internamente.
+     * @return (booleano)
+     */
     public boolean detectarArtefato() {
         final double distanciaDetectada = sensorArtefato.getDistance(DistanceUnit.CM);
-        if(distanciaDetectada <= iConstantes.cutoffDistanciaDetectada) {
-            cronometroTempoSemArtefatoDetectado.start();
+        if(distanciaDetectada <= parametros.cutoffDistanciaDetectada) {
+            cronometroTempoSemArtefato.start();
             
             return true;
         }
         
-        if(cronometroTempoSemArtefatoDetectado.isTimerOn()) {
-            return cronometroTempoSemArtefatoDetectado.elapsedTime() <= iConstantes.duracaoBufferDeteccao;
+        if(cronometroTempoSemArtefato.isTimerOn()) {
+            return cronometroTempoSemArtefato.elapsedTime() <= parametros.duracaoBufferDeteccao;
         }
         
         return false;
     }
 
+    /**
+     *  Retorna um resumo do modo atual do controlador.
+     * @return (string)
+     */
     public String obterResumoModo() {
         return modo.name();
+    }
+
+    //-- COMANDOS --
+
+    /**
+     * Ativa o intake num modo solicitado.
+     *
+     *<p>Volta para modo inicial após o comando ser encerrado.</p>
+     *
+     * @param modo Modo de ativação desejado
+     * @return (novo Comando)
+     */
+    public Command ativar(Modo modo) {
+        return new ComAtivar(modo, this);
     }
 
     public void adicionarDepuracao(Telemetry telemetria) {
@@ -129,10 +190,31 @@ public class Intake extends SubsystemBase {
     }
 }
 
-class iConstantes {
-    //Até onde um artefato pode ser detectado pelo sensor de distância (centímetros)
-    public static double cutoffDistanciaDetectada = 5;
+class ComAtivar extends CommandBase {
+    public final Intake subIntake;
+    public final Intake.Modo modoDesejado;
 
-    //Quanto tempo um artefato deve permanecer como detectado (milissegundos)
-    public static long duracaoBufferDeteccao = 1000;
+    private Intake.Modo modoInicial;
+
+    public ComAtivar(Intake.Modo modoDesejado, Intake subIntake) {
+        this.modoDesejado = modoDesejado;
+
+        this.subIntake = subIntake;
+        addRequirements(this.subIntake);
+    }
+
+    @Override
+    public void initialize() {
+        modoInicial = subIntake.modo;
+    }
+
+    @Override
+    public void execute() {
+        subIntake.modo = modoDesejado;
+    }
+
+    @Override
+    public void end(boolean interrupted) {
+        subIntake.modo = modoInicial;
+    }
 }
