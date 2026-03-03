@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.br.sis;
+package org.firstinspires.ftc.teamcode.br.sistema;
 
 import com.bylazar.configurables.annotations.Configurable;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -21,7 +21,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 @Configurable
 public class Intake extends SubsystemBase {
     //-- PARÂMETROS --
-
     public static class Params {
         //Força enviada para os motores dependendo do seu papel em determinado modo (0.0 min - 1.0 máx).
         public double forcaAltaAtividade = 0.9;
@@ -36,7 +35,16 @@ public class Intake extends SubsystemBase {
         public long duracaoBufferDeteccao = 1000;
     }
     public static Params parametros = new Params();
-    
+
+    //-- ATRIBUTOS --
+    /**
+     *  Switch ligar/desligar.
+     */
+    public boolean ativo = true;
+    /**
+     *  Modo do controlador.
+     */
+    public Modo modo;
     public enum Modo {
         /**
          *  Envia o artefato em direção à saída.
@@ -60,27 +68,14 @@ public class Intake extends SubsystemBase {
         NAO_FAZER_NADA
     }
 
-    //-- ATRIBUTOS --
-
-    /**
-     *  Switch ligar/desligar.
-     */
-    public boolean ativo = true;
-    /**
-     *  Modo do controlador.
-     */
-    public Modo modo;
-
+    //-- ATUADORES E SENSORES --
     private final DcMotorEx motorEntrada;
     private final DcMotorEx motorSaida;
     private final CRServo servoApoioPrimario;
     private final CRServo servoApoioSecundario;
-
     private final DistanceSensor sensorArtefato;
 
-    private final Timing.Stopwatch cronometroTempoSemArtefato = new Timing.Stopwatch();
-
-    public Intake(Modo modoInicial, HardwareMap hardwareMap) {
+    public Intake(HardwareMap hardwareMap) {
         motorEntrada = hardwareMap.get(DcMotorEx.class, "intake");
         motorSaida = hardwareMap.get(DcMotorEx.class, "out");
         servoApoioPrimario = hardwareMap.get(CRServo.class, "levantador");
@@ -89,15 +84,12 @@ public class Intake extends SubsystemBase {
         motorSaida.setDirection(DcMotorSimple.Direction.REVERSE);
 
         sensorArtefato = (DistanceSensor) hardwareMap.get(ColorSensor.class, "SCor");
-
-        modo = modoInicial;
     }
 
     @Override
     public void periodic() {
         //-- CONTROLADOR --
         //Aqui é definido como o modelo físico deve reagir diante à mudança dos atributos.
-
         if(ativo) {
             switch (modo) {
                 case ENVIAR_ARTEFATO:
@@ -126,7 +118,7 @@ public class Intake extends SubsystemBase {
                     servoApoioSecundario.setPower(-parametros.forcaAltaAtividade);
                     break;
                 case SEGURAR_ARTEFATO:
-                    motorEntrada.setPower(parametros.forcaBaixaAtividade);
+                    motorEntrada.setPower(parametros.forcaMeiaAtividade);
                     motorSaida.setPower(0);
 
                     servoApoioPrimario.setPower(parametros.forcaMeiaAtividade);
@@ -161,60 +153,10 @@ public class Intake extends SubsystemBase {
         
         return false;
     }
-
-    /**
-     *  Retorna um resumo do modo atual do controlador.
-     * @return (string)
-     */
-    public String obterResumoModo() {
-        return modo.name();
-    }
-
-    //-- COMANDOS --
-
-    /**
-     * Ativa o intake num modo solicitado.
-     *
-     *<p>Volta para modo inicial após o comando ser encerrado.</p>
-     *
-     * @param modo Modo de ativação desejado
-     * @return (novo Comando)
-     */
-    public Command ativar(Modo modo) {
-        return new ComAtivar(modo, this);
-    }
+    private final Timing.Stopwatch cronometroTempoSemArtefato = new Timing.Stopwatch();
 
     public void adicionarDepuracao(Telemetry telemetria) {
         telemetria.addData(getName().toUpperCase() + " : " + "Artef detectado? (Booleano)" , this::detectarArtefato);
-        telemetria.addData(getName().toUpperCase() + " : " + "Modo" , this::obterResumoModo);
-    }
-}
-
-class ComAtivar extends CommandBase {
-    public final Intake subIntake;
-    public final Intake.Modo modoDesejado;
-
-    private Intake.Modo modoInicial;
-
-    public ComAtivar(Intake.Modo modoDesejado, Intake subIntake) {
-        this.modoDesejado = modoDesejado;
-
-        this.subIntake = subIntake;
-        addRequirements(this.subIntake);
-    }
-
-    @Override
-    public void initialize() {
-        modoInicial = subIntake.modo;
-    }
-
-    @Override
-    public void execute() {
-        subIntake.modo = modoDesejado;
-    }
-
-    @Override
-    public void end(boolean interrupted) {
-        subIntake.modo = modoInicial;
+        telemetria.addData(getName().toUpperCase() + " : " + "Modo" , modo.name());
     }
 }
