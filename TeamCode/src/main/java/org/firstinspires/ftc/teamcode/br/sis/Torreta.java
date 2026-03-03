@@ -203,8 +203,8 @@ public class Torreta extends SubsystemBase {
     public void adicionarDepuracao(Telemetry telemetria) {
         telemetria.addData(getName().toUpperCase() + " : " + "Pos Alvo (Graus)" , this::obterPosicaoAlvo);
         telemetria.addData(getName().toUpperCase() + " : " + "Pos Atual (Graus)" , this::obterPosicaoAtual);
-        telemetria.addData(getName().toUpperCase() + " : " + "no Alvo? (Booleano)", this::estaNaPosicaoAlvo);
         telemetria.addData(getName().toUpperCase() + " : " + "Erro (Graus)", this::obterErroPosicao);
+        telemetria.addData(getName().toUpperCase() + " : " + "no Alvo? (Booleano)", this::estaNaPosicaoAlvo);
         telemetria.addData(getName().toUpperCase() + " : " + "Saída (Volts)", this::obterSaida);
     }
 }
