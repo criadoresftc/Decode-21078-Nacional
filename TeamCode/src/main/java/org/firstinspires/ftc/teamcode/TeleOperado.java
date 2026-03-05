@@ -14,13 +14,10 @@ import org.firstinspires.ftc.teamcode.br.sistema.comandos.comAguardarDisparo;
 public class TeleOperado extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
-        if(Robo.INSTANCIA == null) {
-            Robo.inicializar(hardwareMap, new Pose(72, 72, Math.toRadians(90)), 90);
-        }
+        Robo.inicializar(hardwareMap, new Pose(56, 8, Math.toRadians(180)), 90);
         Robo robo = Robo.INSTANCIA;
 
-        robo.definirAlianca(Robo.Alianca.VERMELHA);
-
+        robo.definirAlianca(Robo.Alianca.AZUL);
         waitForStart();
 
         GamepadEx controle1 = new GamepadEx(gamepad1);

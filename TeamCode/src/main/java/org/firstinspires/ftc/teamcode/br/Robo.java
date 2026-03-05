@@ -57,7 +57,7 @@ public class Robo {
 
     //-- MODIFICADORES --
     public enum Alianca {
-        AZUL(new Pose(4, 140)), VERMELHA(new Pose(140, 140));
+        AZUL(new Pose(1, 140)), VERMELHA(new Pose(140, 140));
 
         public final Pose gol;
 

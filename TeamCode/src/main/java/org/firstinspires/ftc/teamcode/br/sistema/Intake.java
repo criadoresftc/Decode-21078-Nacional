@@ -15,6 +15,8 @@ import com.seattlesolvers.solverslib.util.Timing;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  *  Implementação de um subsistema para o Intake do nosso robô.
  */
@@ -29,10 +31,10 @@ public class Intake extends SubsystemBase {
 
 
         //Até onde um artefato pode ser detectado pelo sensor de distância (centímetros).
-        public double cutoffDistanciaDetectada = 5;
+        public double cutoffDistanciaDetectada = 3;
 
         //Quanto tempo um artefato deve permanecer como detectado (milissegundos).
-        public long duracaoBufferDeteccao = 1000;
+        public long duracaoBufferDeteccao = 1500;
     }
     public static Params parametros = new Params();
 
@@ -44,7 +46,7 @@ public class Intake extends SubsystemBase {
     /**
      *  Modo do controlador.
      */
-    public Modo modo;
+    public Modo modo = Modo.NAO_FAZER_NADA;
     public enum Modo {
         /**
          *  Envia o artefato em direção à saída.
@@ -118,8 +120,12 @@ public class Intake extends SubsystemBase {
                     servoApoioSecundario.setPower(-parametros.forcaAltaAtividade);
                     break;
                 case SEGURAR_ARTEFATO:
-                    motorEntrada.setPower(parametros.forcaMeiaAtividade);
-                    motorSaida.setPower(0);
+                    motorEntrada.setPower(parametros.forcaBaixaAtividade);
+                    if (detectarArtefato()) {
+                        motorSaida.setPower(0);
+                    } else {
+                        motorSaida.setPower(parametros.forcaMeiaAtividade);
+                    }
 
                     servoApoioPrimario.setPower(parametros.forcaMeiaAtividade);
                     servoApoioSecundario.setPower(-parametros.forcaMeiaAtividade);
@@ -153,7 +159,7 @@ public class Intake extends SubsystemBase {
         
         return false;
     }
-    private final Timing.Stopwatch cronometroTempoSemArtefato = new Timing.Stopwatch();
+    private final Timing.Stopwatch cronometroTempoSemArtefato = new Timing.Stopwatch(TimeUnit.MILLISECONDS);
 
     public void adicionarDepuracao(Telemetry telemetria) {
         telemetria.addData(getName().toUpperCase() + " : " + "Artef detectado? (Booleano)" , this::detectarArtefato);
