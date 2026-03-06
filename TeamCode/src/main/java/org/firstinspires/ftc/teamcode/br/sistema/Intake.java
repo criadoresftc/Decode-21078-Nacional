@@ -10,8 +10,10 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.seattlesolvers.solverslib.command.Command;
 import com.seattlesolvers.solverslib.command.CommandBase;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
+import com.seattlesolvers.solverslib.hardware.motors.Motor;
 import com.seattlesolvers.solverslib.util.Timing;
 
+import org.firstinspires.ftc.robotcontroller.internal.FtcOpModeRegister;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
@@ -75,6 +77,12 @@ public class Intake extends SubsystemBase {
     private final DcMotorEx motorSaida;
     private final CRServo servoApoioPrimario;
     private final CRServo servoApoioSecundario;
+
+    private final Motor.Direction direcaoMotorEntrada;
+    private final Motor.Direction direcaoMotorSaida;
+    private final Motor.Direction direcaoServoPrimario;
+    private final Motor.Direction direcaoServoSecundario;
+
     private final DistanceSensor sensorArtefato;
 
     public Intake(HardwareMap hardwareMap) {
@@ -83,7 +91,10 @@ public class Intake extends SubsystemBase {
         servoApoioPrimario = hardwareMap.get(CRServo.class, "levantador");
         servoApoioSecundario = hardwareMap.get(CRServo.class, "subidor");
 
-        motorSaida.setDirection(DcMotorSimple.Direction.REVERSE);
+        direcaoMotorEntrada = Motor.Direction.FORWARD;
+        direcaoMotorSaida = Motor.Direction.REVERSE;
+        direcaoServoPrimario = Motor.Direction.FORWARD;
+        direcaoServoSecundario = Motor.Direction.FORWARD;
 
         sensorArtefato = (DistanceSensor) hardwareMap.get(ColorSensor.class, "SCor");
     }
@@ -92,53 +103,63 @@ public class Intake extends SubsystemBase {
     public void periodic() {
         //-- CONTROLADOR --
         //Aqui é definido como o modelo físico deve reagir diante à mudança dos atributos.
+        double forcaMotorEntrada = 0;
+        double forcaMotorSaida = 0;
+        double forcaServoPrimario = 0;
+        double forcaServoSecundario = 0;
+
         if(ativo) {
             switch (modo) {
                 case ENVIAR_ARTEFATO:
-                    motorEntrada.setPower(parametros.forcaAltaAtividade);
-                    motorSaida.setPower(parametros.forcaAltaAtividade);
+                    forcaMotorEntrada = parametros.forcaAltaAtividade;
+                    forcaMotorSaida = parametros.forcaAltaAtividade;
 
-                    servoApoioPrimario.setPower(parametros.forcaMeiaAtividade);
-                    servoApoioSecundario.setPower(parametros.forcaAltaAtividade);
+                    forcaServoPrimario = parametros.forcaMeiaAtividade;
+                    forcaServoSecundario = parametros.forcaAltaAtividade;
                     break;
                 case COLETAR_ARTEFATO:
-                    motorEntrada.setPower(parametros.forcaAltaAtividade);
+                    forcaMotorEntrada = parametros.forcaAltaAtividade;
                     if (detectarArtefato()) {
-                        motorSaida.setPower(0);
+                        forcaMotorSaida = 0;
                     } else {
-                        motorSaida.setPower(parametros.forcaMeiaAtividade);
+                        forcaMotorSaida = parametros.forcaMeiaAtividade;
                     }
 
-                    servoApoioPrimario.setPower(parametros.forcaMeiaAtividade);
-                    servoApoioSecundario.setPower(-parametros.forcaMeiaAtividade);
+                    forcaServoPrimario = parametros.forcaMeiaAtividade;
+                    forcaServoSecundario = -parametros.forcaMeiaAtividade;
                     break;
                 case EJETAR_ARTEFATO:
-                    motorEntrada.setPower(-parametros.forcaAltaAtividade);
-                    motorSaida.setPower(-parametros.forcaAltaAtividade);
+                    forcaMotorEntrada = -parametros.forcaAltaAtividade;
+                    forcaMotorSaida = -parametros.forcaAltaAtividade;
 
-                    servoApoioPrimario.setPower(-parametros.forcaAltaAtividade);
-                    servoApoioSecundario.setPower(-parametros.forcaAltaAtividade);
+                    forcaServoPrimario = -parametros.forcaAltaAtividade;
+                    forcaServoSecundario = -parametros.forcaAltaAtividade;
                     break;
                 case SEGURAR_ARTEFATO:
-                    motorEntrada.setPower(parametros.forcaBaixaAtividade);
+                    forcaMotorEntrada = parametros.forcaBaixaAtividade;
                     if (detectarArtefato()) {
-                        motorSaida.setPower(0);
+                        forcaMotorSaida = 0;
                     } else {
-                        motorSaida.setPower(parametros.forcaMeiaAtividade);
+                        forcaMotorSaida = parametros.forcaMeiaAtividade;
                     }
 
-                    servoApoioPrimario.setPower(parametros.forcaMeiaAtividade);
-                    servoApoioSecundario.setPower(-parametros.forcaMeiaAtividade);
+                    forcaServoPrimario = parametros.forcaMeiaAtividade;
+                    forcaServoSecundario = -parametros.forcaMeiaAtividade;
                     break;
                 case NAO_FAZER_NADA:
-                    motorEntrada.setPower(0);
-                    motorSaida.setPower(0);
+                    forcaMotorEntrada = 0;
+                    forcaMotorSaida = 0;
 
-                    servoApoioPrimario.setPower(0);
-                    servoApoioSecundario.setPower(0);
+                    forcaServoPrimario = 0;
+                    forcaServoSecundario = 0;
                     break;
             }
         }
+
+        motorEntrada.setPower(forcaMotorEntrada * direcaoMotorEntrada.getMultiplier());
+        motorSaida.setPower(forcaMotorSaida * direcaoMotorSaida.getMultiplier());
+        servoApoioPrimario.setPower(forcaServoPrimario * direcaoServoPrimario.getMultiplier());
+        servoApoioSecundario.setPower(forcaServoSecundario * direcaoServoSecundario.getMultiplier());
     }
 
     /**

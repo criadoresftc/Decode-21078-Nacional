@@ -199,5 +199,7 @@ public class AutonomoPertoVermelho extends LinearOpMode {
 
             robo.telemetria.update();
         }
+
+        robo.scheduler.cancel(comando);
     }
 }

@@ -3,11 +3,13 @@ package org.firstinspires.ftc.teamcode.br.sistema;
 import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.configurables.annotations.Sorter;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.seattlesolvers.solverslib.command.Command;
 import com.seattlesolvers.solverslib.command.CommandBase;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
+import com.seattlesolvers.solverslib.hardware.motors.Motor;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
@@ -49,6 +51,9 @@ public class Shooter extends SubsystemBase {
     private final DcMotorEx motorPrincipal;
     private final DcMotorEx motorSecundario;
 
+    private final Motor.Direction direcaoMotorPrincipal;
+    private final Motor.Direction direcaoMotorSecundario;
+
     private final VoltageSensor sensorEnergia;
 
     //-- RELATÓRIO --
@@ -69,6 +74,9 @@ public class Shooter extends SubsystemBase {
         motorPrincipal = hardwareMap.get(DcMotorEx.class, "shooter1");
         motorSecundario = hardwareMap.get(DcMotorEx.class, "shooter");
 
+        direcaoMotorPrincipal = Motor.Direction.FORWARD;
+        direcaoMotorSecundario = Motor.Direction.FORWARD;
+
         sensorEnergia = hardwareMap.voltageSensor.iterator().next();
     }
 
@@ -87,8 +95,8 @@ public class Shooter extends SubsystemBase {
         }
 
         double forca = tensaoEnviada / sensorEnergia.getVoltage();
-        motorPrincipal.setPower(forca);
-        motorSecundario.setPower(forca);
+        motorPrincipal.setPower(forca * direcaoMotorPrincipal.getMultiplier());
+        motorSecundario.setPower(forca * direcaoMotorSecundario.getMultiplier());
 
         relatorioControle.atualizar(velocidadeAlvo, velocidadeAtual, tensaoEnviada);
     }

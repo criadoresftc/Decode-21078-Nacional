@@ -12,27 +12,35 @@ import org.firstinspires.ftc.teamcode.br.sistema.comandos.comAguardarDisparo;
 
 @TeleOp
 public class TeleOperado extends LinearOpMode {
+    public final double ZONA_MORTA = 0.6;
+
     @Override
     public void runOpMode() throws InterruptedException {
-        Robo.inicializar(hardwareMap, new Pose(56, 8, Math.toRadians(180)), 90);
+        Robo.inicializar(hardwareMap, new Pose(120, 128, Math.toRadians(35)), 90);
         Robo robo = Robo.INSTANCIA;
 
-        robo.definirAlianca(Robo.Alianca.AZUL);
         waitForStart();
 
         GamepadEx controle1 = new GamepadEx(gamepad1);
+        GamepadEx controle2 = new GamepadEx(gamepad2);
 
         robo.follower.startTeleOpDrive();
 
         while(opModeIsActive()) {
             robo.follower.setTeleOpDrive(controle1.getLeftY(), -controle1.getLeftX(), controle1.getRightX());
 
-            robo.torreta.posicao = Math.toDegrees(Math.atan2(robo.alianca.gol.getY() - robo.follower.getPose().getY(), robo.alianca.gol.getX() - robo.follower.getPose().getX()) - robo.follower.getHeading()) + 90;
+            //Controle automático da torreta
+            double dirStick = Math.toDegrees(Math.atan2(-controle2.getRightY(), controle2.getRightX()));
+            if(Math.sqrt(Math.pow(controle2.getRightX(), 2) + Math.pow(controle2.getRightY(), 2)) > 1.414213 * ZONA_MORTA) {
+                robo.torreta.posicao = dirStick;
+            } else {
+                robo.torreta.posicao = Math.toDegrees(Math.atan2(robo.alianca.gol.getY() - robo.follower.getPose().getY(), robo.alianca.gol.getX() - robo.follower.getPose().getX()) - robo.follower.getHeading()) + 90;
+            }
 
-            if(controle1.isDown(GamepadKeys.Button.B)) {
+            if(controle1.isDown(GamepadKeys.Button.B) || controle2.isDown(GamepadKeys.Button.B)) {
                 //Coletar artefato
                 robo.intake.modo = Intake.Modo.COLETAR_ARTEFATO;
-            } else if(controle1.isDown(GamepadKeys.Button.A)) {
+            } else if(controle1.isDown(GamepadKeys.Button.A) || controle2.isDown(GamepadKeys.Button.A)) {
                 //Atirar
                 robo.shooter.velocidade = RegressaoQuadraticaShooter.calc(robo.follower.getPose().distanceFrom(robo.alianca.gol));
 
@@ -51,6 +59,11 @@ public class TeleOperado extends LinearOpMode {
             robo.torreta.adicionarDepuracao(robo.telemetria);
             robo.shooter.adicionarDepuracao(robo.telemetria);
             robo.intake.adicionarDepuracao(robo.telemetria);
+
+            robo.telemetria.addData("alianca", robo.alianca);
+            robo.telemetria.addData("posicao", robo.torreta.posicao);
+            robo.telemetria.addData("posex", robo.follower.getPose().getX());
+            robo.telemetria.addData("heading", robo.follower.getHeading());
 
             robo.telemetria.update();
         }

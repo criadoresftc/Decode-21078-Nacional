@@ -6,10 +6,10 @@ import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
-import com.seattlesolvers.solverslib.command.Command;
-import com.seattlesolvers.solverslib.command.CommandBase;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
+
 import com.seattlesolvers.solverslib.hardware.motors.Motor;
+import com.seattlesolvers.solverslib.hardware.motors.MotorEx;
 import com.seattlesolvers.solverslib.util.MathUtils;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -69,8 +69,11 @@ public class Torreta extends SubsystemBase {
     public double posicaoInicial;
 
     //-- ATUADORES E SENSORES --
-    public final Motor.Encoder encoder;
-    private final com.qualcomm.robotcore.hardware.CRServo servoMotor;
+    private final Motor.Encoder encoder;
+    private final Motor.Direction direcaoEncoder;
+
+    private final CRServo servoMotor;
+    private final Motor.Direction direcaoMotor;
 
     private final VoltageSensor sensorEnergia;
 
@@ -95,10 +98,10 @@ public class Torreta extends SubsystemBase {
 
     public Torreta(HardwareMap hardwareMap) {
         encoder = new Motor(hardwareMap, "intake").encoder;
-        servoMotor = hardwareMap.get(CRServo.class, "torretaServo");
+        servoMotor = hardwareMap.get(CRServo.class,"torretaServo");
 
-        encoder.setDirection(Motor.Direction.REVERSE);
-        servoMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        direcaoEncoder = Motor.Direction.REVERSE;
+        direcaoMotor = Motor.Direction.REVERSE;
 
         encoder.reset();
 
@@ -109,7 +112,7 @@ public class Torreta extends SubsystemBase {
     public void periodic() {
         //-- CONTROLADOR --
         //Aqui é definido como o modelo físico deve reagir diante à mudança dos atributos.
-        final double posicaoAtual = MathUtils.normalizeDegrees(posicaoInicial + encoder.getPosition() / parametros.ticksPorRotacao * 360, true);
+        final double posicaoAtual = MathUtils.normalizeDegrees(posicaoInicial + encoder.getPosition() * direcaoEncoder.getMultiplier() / parametros.ticksPorRotacao * 360, true);
         final double posicaoAlvo = MathUtils.clamp(MathUtils.normalizeDegrees(posicao, true), parametros.limitacaoMinima, parametros.limitacaoMaxima);
 
         final double erro = posicaoAlvo - posicaoAtual;
@@ -127,7 +130,7 @@ public class Torreta extends SubsystemBase {
             tensaoEnviada += Math.signum(tensaoEnviada) * parametros.kS;
         }
 
-        servoMotor.setPower(tensaoEnviada / sensorEnergia.getVoltage());
+        servoMotor.setPower(tensaoEnviada / sensorEnergia.getVoltage() * direcaoMotor.getMultiplier());
 
         relatorioControle.atualizar(posicaoAlvo, posicaoAtual, tensaoEnviada, momentoAtual);
     }

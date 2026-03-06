@@ -108,5 +108,7 @@ public class AutonomoLongeAzul extends LinearOpMode {
 
             robo.telemetria.update();
         }
+
+        robo.scheduler.cancel(comando);
     }
 }
