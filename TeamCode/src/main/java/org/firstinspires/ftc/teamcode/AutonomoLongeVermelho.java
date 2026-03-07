@@ -8,7 +8,6 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.seattlesolvers.solverslib.command.InstantCommand;
 import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
-import com.seattlesolvers.solverslib.command.WaitCommand;
 import com.seattlesolvers.solverslib.pedroCommand.FollowPathCommand;
 
 import org.firstinspires.ftc.teamcode.br.Robo;
@@ -16,35 +15,34 @@ import org.firstinspires.ftc.teamcode.br.sistema.Intake;
 import org.firstinspires.ftc.teamcode.br.sistema.comandos.comAguardarDisparo;
 import org.firstinspires.ftc.teamcode.br.sistema.comandos.comEnviarArtefatoEnquantoPossuir;
 
-@Autonomous(group = "auto azul", preselectTeleOp = "TeleOperado")
-public class AutonomoLongeAzul extends LinearOpMode {
+@Autonomous(group = "auto vermelho", preselectTeleOp = "TeleOperado")
+public class AutonomoLongeVermelho extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
-        Robo.inicializar(hardwareMap, new Pose(56, 8, Math.toRadians(180)), 90);
+        Robo.inicializar(hardwareMap, new Pose(88, 8, Math.toRadians(0)), 90);
         Robo robo = Robo.INSTANCIA;
 
-        robo.definirAlianca(Robo.Alianca.AZUL);
+        robo.definirAlianca(Robo.Alianca.VERMELHA);
 
         PathChain Coleta1, Disparo1;
         Coleta1 = robo.follower.pathBuilder()
                 .addPath(
-                        new BezierCurve(
-                                new Pose(56.000, 8.000),
-                                new Pose(60.897, 41.298),
-                                new Pose(9.737, 35.583)
+                        new BezierLine(
+                                new Pose(88.000, 8.000),
+                                new Pose(133.580, 9.169)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
+                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
                 .build();
 
         Disparo1 = robo.follower.pathBuilder()
                 .addPath(
                         new BezierLine(
-                                new Pose(9.737, 35.583),
-                                new Pose(63.145, 19.489)
+                                new Pose(133.580, 9.169),
+                                new Pose(83.505, 17.295)
                         )
                 )
-                .setConstantHeadingInterpolation(Math.toRadians(180))
+                .setConstantHeadingInterpolation(Math.toRadians(90))
                 .build();
 
         InstantCommand ativarColeta = new InstantCommand(new Runnable() {

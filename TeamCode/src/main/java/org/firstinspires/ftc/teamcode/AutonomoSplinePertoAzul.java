@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
@@ -9,112 +10,114 @@ import com.seattlesolvers.solverslib.command.InstantCommand;
 import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
 import com.seattlesolvers.solverslib.command.WaitCommand;
 import com.seattlesolvers.solverslib.pedroCommand.FollowPathCommand;
-import com.seattlesolvers.solverslib.pedroCommand.TurnCommand;
 
 import org.firstinspires.ftc.teamcode.br.Robo;
 import org.firstinspires.ftc.teamcode.br.sistema.Intake;
-import org.firstinspires.ftc.teamcode.br.sistema.Shooter;
 import org.firstinspires.ftc.teamcode.br.sistema.comandos.comAguardarDisparo;
 import org.firstinspires.ftc.teamcode.br.sistema.comandos.comEnviarArtefatoEnquantoPossuir;
 
-@Autonomous(group = "auto vermelho", preselectTeleOp = "TeleOperado")
-public class AutonomoPertoVermelho extends LinearOpMode {
+@Autonomous(group = "auto azul", preselectTeleOp = "TeleOperado")
+public class AutonomoSplinePertoAzul extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
-        Robo.inicializar(hardwareMap, new Pose(120, 128, Math.toRadians(35)), 90);
+        Robo.inicializar(hardwareMap, new Pose(24, 128, Math.toRadians(145)), 90);
         Robo robo = Robo.INSTANCIA;
 
-        robo.definirAlianca(Robo.Alianca.VERMELHA);
+        robo.definirAlianca(Robo.Alianca.AZUL);
 
-        PathChain TRSLANAMENTO, POSICIONARPARASEGUNDAFILEIRA, COLETARSEGUNDAFILEIRA, VOLTARPARALANAR, ABRIRGATEECOLETAR, ANDARPARATRSPARACOLETAR, VOLTARPARACHUTAR, COLETARTERCEIRAFILEIRA, VOLTARPARALANCARPARKING;
-        TRSLANAMENTO = robo.follower.pathBuilder()
+        PathChain ANDARPARATRSELANAR, COLETARPRIMEIRAFILA, VOLTARPARALANAR, ABRIRGATE, COLETARGATE, VOLTARPARALANAR2, COLETARSEGUNDAFILA, VOLTARPARALANAR3, LEAVE;
+
+        ANDARPARATRSELANAR = robo.follower.pathBuilder()
                 .addPath(
                         new BezierLine(
-                                new Pose(120.000, 128.000),
-                                new Pose(95.000, 96.000)
+                                new Pose(24.000, 128.000),
+                                new Pose(53.000, 93.000)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(36), Math.toRadians(0))
+                .setLinearHeadingInterpolation(Math.toRadians(144), Math.toRadians(180))
                 .build();
 
-        POSICIONARPARASEGUNDAFILEIRA = robo.follower.pathBuilder()
+        COLETARPRIMEIRAFILA = robo.follower.pathBuilder()
                 .addPath(
-                        new BezierLine(
-                                new Pose(95.000, 96.000),
-                                new Pose(102.000, 60.000)
+                        new BezierCurve(
+                                new Pose(53.000, 93.000),
+                                new Pose(53.000, 56.000),
+                                new Pose(19.000, 59.000)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
-                .build();
-
-        COLETARSEGUNDAFILEIRA = robo.follower.pathBuilder()
-                .addPath(
-                        new BezierLine(
-                                new Pose(102.000, 60.000),
-                                new Pose(130.000, 60.000)
-                        )
-                )
-                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
+                .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
                 .build();
 
         VOLTARPARALANAR = robo.follower.pathBuilder()
                 .addPath(
                         new BezierLine(
-                                new Pose(130.000, 60.000),
-                                new Pose(80.000, 80.000)
+                                new Pose(19.000, 59.000),
+                                new Pose(60.000, 84.000)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(35))
+                .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
                 .build();
 
-        ABRIRGATEECOLETAR = robo.follower.pathBuilder()
+        ABRIRGATE = robo.follower.pathBuilder()
                 .addPath(
-                        new BezierLine(
-                                new Pose(80.000, 80.000),
-                                new Pose(125.000, 60.000)
+                        new BezierCurve(
+                                new Pose(60.000, 84.000),
+                                new Pose(39.000, 60.000),
+                                new Pose(16.000, 70.000)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(35), Math.toRadians(45))
+                .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(-90))
                 .build();
 
-        ANDARPARATRSPARACOLETAR = robo.follower.pathBuilder()
+        COLETARGATE = robo.follower.pathBuilder()
                 .addPath(
-                        new BezierLine(
-                                new Pose(125.000, 60.000),
-                                new Pose(125.000, 55.000)
+                        new BezierCurve(
+                                new Pose(16.000, 70.000),
+                                new Pose(20.873, 54.761),
+                                new Pose(13.000, 52.000)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(45), Math.toRadians(35))
+                .setLinearHeadingInterpolation(Math.toRadians(-90), Math.toRadians(135))
                 .build();
 
-        VOLTARPARACHUTAR = robo.follower.pathBuilder()
+        VOLTARPARALANAR2 = robo.follower.pathBuilder()
                 .addPath(
                         new BezierLine(
-                                new Pose(125.000, 55.000),
-                                new Pose(85.000, 85.000)
+                                new Pose(13.000, 52.000),
+                                new Pose(60.000, 84.000)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(35), Math.toRadians(0))
+                .setLinearHeadingInterpolation(Math.toRadians(135), Math.toRadians(180))
                 .build();
 
-        COLETARTERCEIRAFILEIRA = robo.follower.pathBuilder()
+        COLETARSEGUNDAFILA = robo.follower.pathBuilder()
                 .addPath(
                         new BezierLine(
-                                new Pose(85.000, 85.000),
-                                new Pose(125.000, 84.000)
+                                new Pose(60.000, 84.000),
+                                new Pose(19.000, 84.000)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
+                .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
                 .build();
 
-        VOLTARPARALANCARPARKING = robo.follower.pathBuilder()
+        VOLTARPARALANAR3 = robo.follower.pathBuilder()
                 .addPath(
                         new BezierLine(
-                                new Pose(125.000, 84.000),
-                                new Pose(85.000, 112.000)
+                                new Pose(19.000, 84.000),
+                                new Pose(60.000, 84.000)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
+                .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
+                .build();
+
+        LEAVE = robo.follower.pathBuilder()
+                .addPath(
+                        new BezierLine(
+                                new Pose(60.000, 84.000),
+                                new Pose(39.000, 74.000)
+                        )
+                )
+                .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
                 .build();
 
         InstantCommand ativarColeta = new InstantCommand(new Runnable() {
@@ -148,38 +151,36 @@ public class AutonomoPertoVermelho extends LinearOpMode {
         waitForStart();
 
         SequentialCommandGroup comando = new SequentialCommandGroup(
-                new FollowPathCommand(robo.follower, TRSLANAMENTO),
+                new FollowPathCommand(robo.follower, ANDARPARATRSELANAR),
                 ativarShooter,
                 new comAguardarDisparo(robo.shooter, robo.torreta),
                 new comEnviarArtefatoEnquantoPossuir(robo.intake, Intake.Modo.NAO_FAZER_NADA),
                 desativarShooter,
                 ativarColeta,
-                new FollowPathCommand(robo.follower, POSICIONARPARASEGUNDAFILEIRA),
-                new FollowPathCommand(robo.follower, COLETARSEGUNDAFILEIRA),
+                new FollowPathCommand(robo.follower, COLETARPRIMEIRAFILA),
+                ativarShooter,
                 new FollowPathCommand(robo.follower, VOLTARPARALANAR),
                 desativarColeta,
-                ativarShooter,
                 new comAguardarDisparo(robo.shooter, robo.torreta),
                 new comEnviarArtefatoEnquantoPossuir(robo.intake, Intake.Modo.NAO_FAZER_NADA),
-                desativarShooter,
                 ativarColeta,
-                new FollowPathCommand(robo.follower, ABRIRGATEECOLETAR),
-                new FollowPathCommand(robo.follower, ANDARPARATRSPARACOLETAR),
-                new WaitCommand(1000),
+                new FollowPathCommand(robo.follower, ABRIRGATE),
+                new FollowPathCommand(robo.follower, COLETARGATE),
                 ativarShooter,
-                new FollowPathCommand(robo.follower, VOLTARPARACHUTAR),
+                new FollowPathCommand(robo.follower, VOLTARPARALANAR2),
                 desativarColeta,
                 new comAguardarDisparo(robo.shooter, robo.torreta),
                 new comEnviarArtefatoEnquantoPossuir(robo.intake, Intake.Modo.NAO_FAZER_NADA),
                 desativarShooter,
                 ativarColeta,
-                new FollowPathCommand(robo.follower, COLETARTERCEIRAFILEIRA),
-                desativarColeta,
-                new FollowPathCommand(robo.follower, VOLTARPARALANCARPARKING),
+                new FollowPathCommand(robo.follower, COLETARSEGUNDAFILA),
                 ativarShooter,
+                new FollowPathCommand(robo.follower, VOLTARPARALANAR3),
+                desativarColeta,
                 new comAguardarDisparo(robo.shooter, robo.torreta),
                 new comEnviarArtefatoEnquantoPossuir(robo.intake, Intake.Modo.NAO_FAZER_NADA),
-                desativarShooter
+                desativarShooter,
+                new FollowPathCommand(robo.follower, LEAVE)
         );
 
         robo.scheduler.schedule(comando);

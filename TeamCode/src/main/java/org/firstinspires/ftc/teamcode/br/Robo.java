@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.br;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.seattlesolvers.solverslib.command.CommandScheduler;
 
@@ -27,6 +28,7 @@ public class Robo {
     public Torreta torreta;
     public Shooter shooter;
     public Intake intake;
+    public Limelight3A limelight;
 
     /**
      * Cria uma nova instância para determinada posição inicial.
@@ -53,6 +55,7 @@ public class Robo {
         torreta = new Torreta(hardwareMap);
         shooter = new Shooter(hardwareMap);
         intake = new Intake(hardwareMap);
+        limelight = hardwareMap.get(Limelight3A.class, "Limelight");
     }
 
     //-- MODIFICADORES --
