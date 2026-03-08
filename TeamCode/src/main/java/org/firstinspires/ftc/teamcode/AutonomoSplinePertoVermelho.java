@@ -44,7 +44,7 @@ public class AutonomoSplinePertoVermelho extends LinearOpMode {
                         new BezierCurve(
                                 new Pose(91.000, 93.000),
                                 new Pose(91.000, 56.000),
-                                new Pose(125.000, 59.000)
+                                new Pose(120.000, 59.000)
                         )
                 )
                 .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
@@ -53,7 +53,7 @@ public class AutonomoSplinePertoVermelho extends LinearOpMode {
         VOLTARPARALANAR = robo.follower.pathBuilder()
                 .addPath(
                         new BezierLine(
-                                new Pose(125.000, 59.000),
+                                new Pose(120.000, 59.000),
                                 new Pose(84.000, 84.000)
                         )
                 )

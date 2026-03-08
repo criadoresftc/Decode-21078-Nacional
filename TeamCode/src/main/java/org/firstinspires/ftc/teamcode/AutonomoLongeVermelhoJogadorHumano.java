@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
+import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -16,33 +17,78 @@ import org.firstinspires.ftc.teamcode.br.sistema.comandos.comAguardarDisparo;
 import org.firstinspires.ftc.teamcode.br.sistema.comandos.comEnviarArtefatoEnquantoPossuir;
 
 @Autonomous(group = "auto vermelho", preselectTeleOp = "TeleOperado")
-public class AutonomoLongeVermelho extends LinearOpMode {
+public class AutonomoLongeVermelhoJogadorHumano extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
-        Robo.inicializar(hardwareMap, new Pose(88, 8, Math.toRadians(0)), 90);
+        Robo.inicializar(hardwareMap, new Pose(88, 8, Math.toRadians(90)), 90);
         Robo robo = Robo.INSTANCIA;
 
         robo.definirAlianca(Robo.Alianca.VERMELHA);
 
-        PathChain Coleta1, Disparo1;
-        Coleta1 = robo.follower.pathBuilder()
+        PathChain Path1, Path2, Path3, Path4, Path5, Path6;
+
+        Path1 = robo.follower.pathBuilder()
+                .addPath(
+                        new BezierCurve(
+                                new Pose(88.000, 8.000),
+                                new Pose(117.000, 11.000),
+                                new Pose(134.000, 9.000)
+                        )
+                )
+                .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(0))
+                .build();
+
+        Path2 = robo.follower.pathBuilder()
+                .addPath(
+                        new BezierCurve(
+                                new Pose(134.000, 9.000),
+                                new Pose(117.000, 11.000),
+                                new Pose(88.000, 8.000)
+                        )
+                )
+                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(90))
+                .build();
+
+        Path3 = robo.follower.pathBuilder()
                 .addPath(
                         new BezierLine(
                                 new Pose(88.000, 8.000),
-                                new Pose(133.580, 9.169)
+                                new Pose(134.000, 9.000)
+                        )
+                )
+                .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(0))
+                .build();
+
+        Path4 = robo.follower.pathBuilder()
+                .addPath(
+                        new BezierLine(
+                                new Pose(134.000, 9.000),
+                                new Pose(124.000, 11.000)
                         )
                 )
                 .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
                 .build();
 
-        Disparo1 = robo.follower.pathBuilder()
+        Path5 = robo.follower.pathBuilder()
                 .addPath(
-                        new BezierLine(
-                                new Pose(133.580, 9.169),
-                                new Pose(83.505, 17.295)
+                        new BezierCurve(
+                                new Pose(124.000, 11.000),
+                                new Pose(125.000, 21.000),
+                                new Pose(135.000, 25.000)
                         )
                 )
-                .setConstantHeadingInterpolation(Math.toRadians(90))
+                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
+                .build();
+
+        Path6 = robo.follower.pathBuilder()
+                .addPath(
+                        new BezierCurve(
+                                new Pose(135.000, 25.000),
+                                new Pose(118.346, 13.892),
+                                new Pose(89.000, 8.000)
+                        )
+                )
+                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(90))
                 .build();
 
         InstantCommand ativarColeta = new InstantCommand(new Runnable() {
@@ -81,10 +127,20 @@ public class AutonomoLongeVermelho extends LinearOpMode {
                 new comEnviarArtefatoEnquantoPossuir(robo.intake, Intake.Modo.NAO_FAZER_NADA),
                 desativarShooter,
                 ativarColeta,
-                new FollowPathCommand(robo.follower, Coleta1),
-                desativarColeta,
-                new FollowPathCommand(robo.follower, Disparo1),
+                new FollowPathCommand(robo.follower, Path1),
                 ativarShooter,
+                new FollowPathCommand(robo.follower, Path2),
+                desativarColeta,
+                new comAguardarDisparo(robo.shooter, robo.torreta),
+                new comEnviarArtefatoEnquantoPossuir(robo.intake, Intake.Modo.NAO_FAZER_NADA),
+                desativarShooter,
+                ativarColeta,
+                new FollowPathCommand(robo.follower, Path3),
+                new FollowPathCommand(robo.follower, Path4),
+                new FollowPathCommand(robo.follower, Path5),
+                ativarShooter,
+                desativarColeta,
+                new FollowPathCommand(robo.follower, Path6),
                 new comAguardarDisparo(robo.shooter, robo.torreta),
                 new comEnviarArtefatoEnquantoPossuir(robo.intake, Intake.Modo.NAO_FAZER_NADA),
                 desativarShooter
