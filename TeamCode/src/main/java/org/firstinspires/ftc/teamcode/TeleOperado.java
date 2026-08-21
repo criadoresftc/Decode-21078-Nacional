@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.pedropathing.geometry.Pose;
+import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -38,6 +39,8 @@ public class TeleOperado extends LinearOpMode {
         double offsetAlinhamento = 0;
         double offsetVelocidadeShooter = 0;
 
+        robo.limelight.start();
+
         while(opModeIsActive()) {
             robo.follower.setTeleOpDrive(controle1.getLeftY(), -controle1.getLeftX(), controle1.getRightX());
 
@@ -53,7 +56,13 @@ public class TeleOperado extends LinearOpMode {
             }*/
 
             //Torreta
-            robo.torreta.posicao = Math.toDegrees(Math.atan2(robo.alianca.gol.getY() - robo.follower.getPose().getY(), robo.alianca.gol.getX() - robo.follower.getPose().getX()) - robo.follower.getHeading() + offsetAlinhamento) + 90;
+            LLResult result = robo.limelight.getLatestResult();
+            if(result.isValid()) {
+                robo.torreta.posicao = robo.torreta.obterPosicaoRegistrada() - result.getTx();
+            } else {
+                robo.torreta.posicao = Math.toDegrees(Math.atan2(robo.alianca.gol.getY() - robo.follower.getPose().getY(), robo.alianca.gol.getX() - robo.follower.getPose().getX()) - robo.follower.getHeading()) + 90;
+            }
+            robo.torreta.posicao += offsetAlinhamento;
 
             if(controle2.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > SENSIBILIDADE_TRIGGER) {
                 //Atirar

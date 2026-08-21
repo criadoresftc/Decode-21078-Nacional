@@ -4,6 +4,7 @@ import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
+import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.seattlesolvers.solverslib.command.InstantCommand;
@@ -17,6 +18,8 @@ import org.firstinspires.ftc.teamcode.br.sistema.comandos.comEnviarArtefatoEnqua
 
 @Autonomous(group = "auto azul", preselectTeleOp = "TeleOperado")
 public class AutonomoLongeAzulJogadorHumano extends LinearOpMode {
+    boolean velocidadeAuto = false;
+
     @Override
     public void runOpMode() throws InterruptedException {
         Robo.inicializar(hardwareMap, new Pose(56, 8, Math.toRadians(180)), 90);
@@ -107,14 +110,14 @@ public class AutonomoLongeAzulJogadorHumano extends LinearOpMode {
         InstantCommand ativarShooter = new InstantCommand(new Runnable() {
             @Override
             public void run() {
-                robo.shooter.velocidade = RegressaoQuadraticaShooter.calc(robo.follower.getPose().distanceFrom(robo.alianca.gol));
+                velocidadeAuto = true;
             }
         });
 
         InstantCommand desativarShooter = new InstantCommand(new Runnable() {
             @Override
             public void run() {
-                robo.shooter.velocidade = 1000;
+                velocidadeAuto = false;
             }
         });
 
@@ -145,10 +148,23 @@ public class AutonomoLongeAzulJogadorHumano extends LinearOpMode {
                 desativarShooter
         );
 
+        robo.limelight.start();
+
         robo.scheduler.schedule(comando);
         robo.intake.modo = Intake.Modo.SEGURAR_ARTEFATO;
         while(opModeIsActive()) {
-            robo.torreta.posicao = Math.toDegrees(Math.atan2(robo.alianca.gol.getY() - robo.follower.getPose().getY(), robo.alianca.gol.getX() - robo.follower.getPose().getX()) - robo.follower.getHeading()) + 90;
+            LLResult result = robo.limelight.getLatestResult();
+            if(result.isValid()) {
+                robo.torreta.posicao = robo.torreta.obterPosicaoRegistrada() - result.getTx();
+            } else {
+                robo.torreta.posicao = Math.toDegrees(Math.atan2(robo.alianca.gol.getY() - robo.follower.getPose().getY(), robo.alianca.gol.getX() - robo.follower.getPose().getX()) - robo.follower.getHeading()) + 90;
+            }
+
+            if(velocidadeAuto) {
+                robo.shooter.velocidade = RegressaoQuadraticaShooter.calc(robo.follower.getPose().distanceFrom(robo.alianca.gol));
+            } else {
+                robo.shooter.velocidade = 1000;
+            }
 
             robo.scheduler.run();
             robo.follower.update();

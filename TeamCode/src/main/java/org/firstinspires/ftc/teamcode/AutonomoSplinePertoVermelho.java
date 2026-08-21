@@ -6,6 +6,7 @@ import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
+import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.seattlesolvers.solverslib.command.InstantCommand;
@@ -44,7 +45,7 @@ public class AutonomoSplinePertoVermelho extends LinearOpMode {
                         new BezierCurve(
                                 new Pose(91.000, 93.000),
                                 new Pose(91.000, 56.000),
-                                new Pose(120.000, 59.000)
+                                new Pose(115.000, 59.000)
                         )
                 )
                 .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
@@ -53,7 +54,7 @@ public class AutonomoSplinePertoVermelho extends LinearOpMode {
         VOLTARPARALANAR = robo.follower.pathBuilder()
                 .addPath(
                         new BezierLine(
-                                new Pose(120.000, 59.000),
+                                new Pose(115.000, 59.000),
                                 new Pose(84.000, 84.000)
                         )
                 )
@@ -152,6 +153,8 @@ public class AutonomoSplinePertoVermelho extends LinearOpMode {
 
         waitForStart();
 
+        robo.limelight.start();
+
         SequentialCommandGroup comando = new SequentialCommandGroup(
                 new FollowPathCommand(robo.follower, ANDARPARATRSELANAR),
                 ativarShooter,
@@ -189,7 +192,12 @@ public class AutonomoSplinePertoVermelho extends LinearOpMode {
         robo.intake.modo = Intake.Modo.SEGURAR_ARTEFATO;
 
         while(opModeIsActive()) {
-            robo.torreta.posicao = Math.toDegrees(Math.atan2(robo.alianca.gol.getY() - robo.follower.getPose().getY(), robo.alianca.gol.getX() - robo.follower.getPose().getX()) - robo.follower.getHeading()) + 90;
+            LLResult result = robo.limelight.getLatestResult();
+            if(result.isValid()) {
+                robo.torreta.posicao = robo.torreta.obterPosicaoRegistrada() - result.getTx();
+            } else {
+                robo.torreta.posicao = Math.toDegrees(Math.atan2(robo.alianca.gol.getY() - robo.follower.getPose().getY(), robo.alianca.gol.getX() - robo.follower.getPose().getX()) - robo.follower.getHeading()) + 90;
+            }
 
             robo.scheduler.run();
             robo.follower.update();
